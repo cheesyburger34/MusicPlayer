@@ -13,7 +13,7 @@ body {
     display: flex; /* Aligns sidebar and main content side-by-side */
 }
 
-/* Sidebar styling: Uses semi-transparent background and blur for a glass effect */
+/* Sidebar styling */
 .left-nav {
     width: 400px;
     background: rgba(20, 20, 30, 0.95);
@@ -24,6 +24,13 @@ body {
     padding: 20px 0;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     padding-top: 100px;
+    transform: translateX(-90%);
+    transition: transform 0.3s ease;
+}
+
+/* Show left-nav when active */
+.left-nav:hover {
+    transform: translateX(0);
 }
 
 /* Container for the navigation links */
@@ -50,6 +57,7 @@ body {
     display: flex;
     align-items: flex-start;
     overflow: hidden;
+    
 }
 
 /* Lighten background when hovering over an item */
@@ -72,6 +80,8 @@ body {
 .nav-item.below-active {
     align-items: flex-end;
 }
+
+
 
 /* Styling for icons inside the nav items */
 .nav-icon {
