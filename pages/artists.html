@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player - Navigation</title>
+    <link rel="stylesheet" href="/styles/main.css">
+    <link rel="stylesheet" href="/styles/artists.css">
+
+</head>
+
+<body>
+    <nav class="left-nav">
+        <div class="nav-items">
+            <a href="#" class="nav-item active" data-page="home">
+                <span class="nav-icon"></span>
+                <span>Library</span>
+            </a>
+            <a href="#" class="nav-item" data-page="artists">
+                <span class="nav-icon"></span>
+                <span>Artists</span>
+            </a>
+            <a href="#" class="nav-item" data-page="homepage">
+                <span class="nav-icon"></span>
+                <span>Home Page</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="content">
+        <div id="home" class="page-content active">
+            <div>
+                <h2>Library</h2>
+                <p>Browse your complete music collection</p>
+            </div>
+        </div>
+        <div id="artists" class="page-content">
+            <div>
+                <h2>Artists</h2>
+                <p>Explore music by your favorite artists</p>
+                <img class="artist-image" src="/images/linkin.png" alt="Artist Image">
+            </div>
+        </div>
+        <div id="homepage" class="page-content">
+            <div>
+                <h2>Home Page</h2>
+                <p>Welcome back to your music dashboard.</p>
+            </div>
+        </div>
+    </div>
+    <script src="/scripts/main.js" async></script>
+</body>
+
+</html>
