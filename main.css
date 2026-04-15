@@ -15,7 +15,7 @@ body {
 
 /* Sidebar styling */
 .left-nav {
-    width: 400px;
+    width: 20%;
     background: rgba(20, 20, 30, 0.95);
     backdrop-filter: blur(10px); /* Frosted glass effect */
     border-right: 1px solid rgba(255, 255, 255, 0.1);
@@ -83,51 +83,108 @@ body {
     min-width: 20px;
 }
 
-/* Main content area: Fills remaining horizontal space */
+.content-header {
+    margin-bottom: 40px;
+    width: 100%;
+    text-align: left;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+.music-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.2s ease;
+    text-align: center;
+}
+
+.music-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Artist List Styling */
+.artist-list {
+    list-style: none;
+    width: 100%;
+}
+
+.artist-list li {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 20px;
+}
+
+.artist-list li span {
+    color: #c943ac;
+    font-weight: bold;
+}
+
+/* 1. Setup the 3D Stage */
 .content {
     flex: 1;
-    padding: 40px;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    perspective: 2000px; /* Increased perspective for a dramatic curve */
+    position: relative;
+    padding: 60px;
+    overflow: hidden;
 }
 
-/* Hidden by default; visibility is toggled via JS */
+/* 2. The Curved Paper Slide */
 .page-content {
     display: none;
-    animation: slideIn 0.5s ease forwards;
+    position: absolute;
+    width: 85%;
+    left: 7.5%;
+    opacity: 0;
+    /* Pivot point is way off-screen to the right to create the curve */
+    transform-origin: 200% 50%; 
+    backface-visibility: hidden;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 40px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -20px 20px 50px rgba(0, 0, 0, 0.3);
 }
 
-/* Shows the content when the .active class is applied */
 .page-content.active {
     display: block;
+    animation: curvedSlideIn 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* Animation to make content fade and slide in from the right */
-@keyframes slideIn {
-    from {
+.page-content.exit {
+    display: block;
+    animation: curvedSlideOut 0.8s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+
+/* Coming in from the right with a curve */
+@keyframes curvedSlideIn {
+    0% {
         opacity: 0;
-        transform: translateX(20px);
+        transform: rotateY(-90deg) translateX(100%) scale(0.5);
     }
-    to {
+    100% {
         opacity: 1;
-        transform: translateX(0);
+        transform: rotateY(0deg) translateX(0) scale(1);
     }
 }
 
-/* Styling for the main headers with a text-gradient effect */
-.page-content h2 {
-    font-size: 48px;
-    margin-bottom: 20px;
-    background: linear-gradient(135deg, #81296e, #c943ac);
-    -webkit-background-clip: text; /* Clips background to text shape */
-    -webkit-text-fill-color: transparent; /* Makes text transparent to show gradient */
-    background-clip: text;
+/* Sliding out to the left with a curve */
+@keyframes curvedSlideOut {
+    0% {
+        opacity: 1;
+        transform: rotateY(0deg) translateX(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: rotateY(90deg) translateX(100%) scale(0.5);
+    }
 }
 
-/* Paragraph styling for better readability */
-.page-content p {
-    font-size: 18px;
-    color: rgba(255, 255, 255, 0.8);
-}

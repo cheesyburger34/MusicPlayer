@@ -58,15 +58,22 @@ function activateItem(clickedItem) {
         }
     });
 
-    // 3. Navigation Logic
-    // If the item has a specific data attribute or you want to map it by ID:
-    const targetFile = clickedItem.getAttribute('href');
-    
-    if (targetFile && targetFile !== "#") {
-        // Optional: Add a slight delay so the user sees the animation before the page flips
+    // --- Curved Carousel Logic ---
+    if (currentPage) {
+        currentPage.classList.remove('active');
+        currentPage.classList.add('exit');
+        
+        // Cleanup after animation finishes
         setTimeout(() => {
-            window.location.href = targetFile;
-        }, ); 
+            currentPage.classList.remove('exit');
+        }, 800); 
+    }
+
+    if (nextPage) {
+        // Delay a tiny bit to let the exit animation start for a layered look
+        setTimeout(() => {
+            nextPage.classList.add('active');
+        }, 50);
     }
 }
 
