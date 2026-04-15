@@ -57,6 +57,17 @@ function activateItem(clickedItem) {
             item.style.minHeight = '150px';
         }
     });
+
+    // 3. Navigation Logic
+    // If the item has a specific data attribute or you want to map it by ID:
+    const targetFile = clickedItem.getAttribute('href');
+    
+    if (targetFile && targetFile !== "#") {
+        // Optional: Add a slight delay so the user sees the animation before the page flips
+        setTimeout(() => {
+            window.location.href = targetFile;
+        }, ); 
+    }
 }
 
 // Attach click listeners to all navigation items

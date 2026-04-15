@@ -37,7 +37,7 @@ body {
 /* Individual navigation link styles */
 .nav-item {
     position: relative;
-    margin-top: -100px; /* Note: This creates a significant overlap between items */
+    margin-top: -100px; 
     padding: 20px 24px;
     min-height: 220px;
     color: rgba(255, 255, 255, 0.7);
