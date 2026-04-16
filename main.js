@@ -57,6 +57,24 @@ function activateItem(clickedItem) {
             item.style.minHeight = '150px';
         }
     });
+
+    // --- Curved Carousel Logic ---
+    if (currentPage) {
+        currentPage.classList.remove('active');
+        currentPage.classList.add('exit');
+        
+        // Cleanup after animation finishes
+        setTimeout(() => {
+            currentPage.classList.remove('exit');
+        }, 800); 
+    }
+
+    if (nextPage) {
+        // Delay a tiny bit to let the exit animation start for a layered look
+        setTimeout(() => {
+            nextPage.classList.add('active');
+        }, 50);
+    }
 }
 
 // Attach click listeners to all navigation items

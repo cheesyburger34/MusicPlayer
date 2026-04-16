@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player - Navigation</title>
+    <link rel="stylesheet" href="/main.css">
+</head>
+
+<body>
+    <nav class="left-nav">
+        <div class="nav-items">
+            <a href="#" class="nav-item active" data-page="library">
+                <span class="nav-icon"></span>
+                <span>Library</span>
+            </a>
+            <a href="#" class="nav-item" data-page="artists">
+                <span class="nav-icon"></span>
+                <span>Artists</span>
+            </a>
+            <a href="#" class="nav-item" data-page="homepage">
+                <span class="nav-icon"></span>
+                <span>Home Page</span>
+            </a>
+        </div>
+    </nav>
+
+
+    <div class="content">
+        <div id="library" class="page-content active">
+            <header class="content-header">
+                <h2>Library</h2>
+                <p>Browse your complete music collection</p>
+            </header>
+            <div class="grid-container">
+                <div class="music-card">Recently Added</div>
+                <div class="music-card">Favorites</div>
+                <div class="music-card">Playlists</div>
+            </div>
+        </div>
+
+        <!-- ARTISTS: work here to add things to the artists page -->
+        <div id="artists" class="page-content">
+            <header class="content-header">
+                <h2>Artists</h2>
+                <p>Explore music by your favorite artists</p>
+            </header>
+            <ul class="artist-list">
+                <li><img src="images/linkin.png" alt="Linkin Park" class="artist-image"><span>1</span>
+                    <div class="song-card">
+                        Linkin Park
+                    </div>
+                </li>
+                <li><img src="images/parannoul.png" alt="Parannoul" class="artist-image"><span>2</span> Parannoul</li>
+                <li><img src="images/static-x.jpg" alt="Static-X" class="artist-image"><span>3</span> Static-X</li>
+            </ul>
+        </div>
+
+        <!-- HOME: work here to add things to the homepage -->
+        <div id="homepage" class="page-content">
+            <header class="content-header">
+                <h2>Home Page</h2>
+                <p>Welcome back to your music dashboard.</p>
+            </header>
+            <div class="stats-banner">
+                <div class="stat-item">
+                    <h3>1,240</h3>
+                    <p>Songs</p>
+                </div>
+                <div class="stat-item">
+                    <h3>45</h3>
+                    <p>Artists</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/main.js" async></script>
+</body>
+
+</html>
