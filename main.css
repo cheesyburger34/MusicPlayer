@@ -138,6 +138,36 @@ body {
     border-radius: 8px;
     border-radius: 50%;
 }
+
+.album-cover {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.play-button{
+    width:2.5vh;
+    height: 2.5vh;
+    background: #c943ac;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(201, 67, 172, 0.25);
+}
+
+.play-button:hover {
+    background: #a0328ca7;
+}
+
+
+.play-icon {
+    width: 2.5vh;
+    height: 2.5vh;
+}
 /* 1. Setup the 3D Stage */
 .content {
     flex: 1;
