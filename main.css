@@ -111,7 +111,7 @@ body {
 }
 
 .play-btn{
-    padding : 15px 30px;
+    padding : 2% 30px;
     font-size: 16px;
     display: flex;
     justify-content: center;
@@ -130,7 +130,7 @@ body {
 }
 
 .next-btn{
-    padding : 15px 30px;
+    padding : 2% 30px;;
     font-size: 16px;
     display: flex;
     justify-content: center;
@@ -151,7 +151,7 @@ body {
 
 
 .content-header {
-    margin-bottom: 40%;
+    margin-bottom: 10%;
     width: 100%;
     text-align: left;
 }
@@ -245,12 +245,17 @@ body {
     }
 }
 
-.artist-image {
+.artist-info {
     width: 60px;
     height: 60px;
     object-fit: cover;
     border-radius: 50%;
-    border: 2px solid #971591;    
+    border: 2px solid #971591;   
+    font-size: 24px;
+    color: #c943ac;
+    font-weight: bold;
+    font-weight: 900;
+    font-family: 'courier new', courier, monospace; 
 }
 
 .album-cover {
