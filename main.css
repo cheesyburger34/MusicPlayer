@@ -21,8 +21,8 @@ body {
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
-    padding: 20px 0;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    padding: 5% 0;
+    box-shadow: 6px 8px 32px rgba(0, 0, 0, 0.4);
     padding-top: 100px;
 }
 
@@ -38,15 +38,15 @@ body {
 .nav-item {
     position: relative;
     margin-top: -100px; 
-    padding: 20px 24px;
-    min-height: 220px;
+    padding: 5% 8%;
+    min-height: 80%;
     color: rgba(255, 255, 255, 0.7);
     background: rgba(0, 0, 0, 0.3);
     text-decoration: none;
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 2%;
     transition: all 0.3s ease; /* Smooth hover effects */
     display: flex;
     align-items: flex-start;
@@ -66,7 +66,7 @@ body {
     align-items: flex-start;
 }
 
-/* Positional classes (likely controlled by JS) to change alignment of text within items */
+
 .nav-item.above-active {
     align-items: flex-start;
 }
@@ -83,8 +83,75 @@ body {
     min-width: 20px;
 }
 
+
+.btm-player {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 80%;
+    height: 10vh;
+    background: rgba(20, 20, 30, 1);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content:center;
+    padding: 2% ;
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
+
+}
+
+.player-controls {
+    display: flex;
+    padding-left: 10%;
+    padding-right: 10%;
+    padding-top: 0%;
+    gap: 20%;
+    width: 100%;
+    justify-content: center;
+}
+
+.play-btn{
+    padding : 15px 30px;
+    font-size: 16px;
+    display: flex;
+    justify-content: center;
+    text-decoration: black;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.play-btn:hover {
+    transform: translateY(-5px);
+    background: rgba(243, 152, 228, 0.4);
+}
+
+.next-btn{
+    padding : 15px 30px;
+    font-size: 16px;
+    display: flex;
+    justify-content: center;
+    text-decoration: black;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.next-btn:hover {
+    transform: translateY(-5px);
+    background: rgba(243, 152, 228, 0.4);
+}
+
+
+
 .content-header {
-    margin-bottom: 40px;
+    margin-bottom: 40%;
     width: 100%;
     text-align: left;
 }
@@ -135,6 +202,7 @@ body {
     position: relative;
     padding: 60px;
     overflow: hidden;
+    height: 90vh;
 }
 
 /* 2. The Curved Paper Slide */
@@ -175,16 +243,3 @@ body {
         transform: rotateY(0deg) translateX(0) scale(1);
     }
 }
-
-/* Sliding out to the left with a curve */
-@keyframes curvedSlideOut {
-    0% {
-        opacity: 1;
-        transform: rotateY(0deg) translateX(0) scale(1);
-    }
-    100% {
-        opacity: 0;
-        transform: rotateY(90deg) translateX(100%) scale(0.5);
-    }
-}
-

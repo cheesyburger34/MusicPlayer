@@ -58,7 +58,7 @@ function activateItem(clickedItem) {
         }
     });
 
-    // --- Curved Carousel Logic ---
+    // Curved  Logic
     if (currentPage) {
         currentPage.classList.remove('active');
         currentPage.classList.add('exit');
