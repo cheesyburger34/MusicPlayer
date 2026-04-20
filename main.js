@@ -113,3 +113,12 @@ window.addEventListener('load', () => {
     }
 });
 window.addEventListener('resize', updateStack);
+
+function pause(button){
+    const playIcon = button.querySelector('.play-icon');
+    if (playIcon.src.includes('play-icon.png')) {
+        playIcon.src = 'images/pause-icon.png';
+    } else {
+        playIcon.src = 'images/play-icon.png';
+    }
+}

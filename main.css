@@ -135,8 +135,8 @@ body {
     width: 60px;
     height: 60px;
     object-fit: cover;
-    border-radius: 8px;
     border-radius: 50%;
+    border: 2px solid #971591;    
 }
 
 .album-cover {
@@ -163,10 +163,32 @@ body {
     background: #a0328ca7;
 }
 
-
 .play-icon {
     width: 2.5vh;
     height: 2.5vh;
+}
+
+p3{
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 100;
+    font-family: 'courier new', courier, monospace;
+    margin-top: 4px;
+}
+
+p4{
+    font-size: 24px;
+    color: #c943ac;
+    font-weight: bold;
+    font-weight: 900;
+    font-family: 'courier new', courier, monospace;
+}
+
+.song-info {
+    display: flex;
+    align-items: top;
+    gap: 10px;
+    margin-top: -1px;
 }
 /* 1. Setup the 3D Stage */
 .content {
