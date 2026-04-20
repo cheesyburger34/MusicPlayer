@@ -193,6 +193,7 @@ body {
 .artist-list li span {
     color: #c943ac;
     font-weight: bold;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* 1. Setup the 3D Stage */
@@ -242,4 +243,64 @@ body {
         opacity: 1;
         transform: rotateY(0deg) translateX(0) scale(1);
     }
+}
+
+.artist-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #971591;    
+}
+
+.album-cover {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.play-button{
+    width:2.5vh;
+    height: 2.5vh;
+    background: #c943ac;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(201, 67, 172, 0.25);
+}
+
+.play-button:hover {
+    background: #a0328ca7;
+}
+
+.play-icon {
+    width: 2.5vh;
+    height: 2.5vh;
+}
+
+p3{
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 100;
+    font-family: 'courier new', courier, monospace;
+    margin-top: 4px;
+}
+
+p4{
+    font-size: 24px;
+    color: #c943ac;
+    font-weight: bold;
+    font-weight: 900;
+    font-family: 'courier new', courier, monospace;
+}
+
+.song-info {
+    display: flex;
+    align-items: top;
+    gap: 10px;
+    margin-top: -1px;
 }

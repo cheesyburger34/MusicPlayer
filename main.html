@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Player - Navigation</title>
     <link rel="stylesheet" href="/main.css">
 </head>
+
 <body>
     <nav class="left-nav">
         <div class="nav-items">
@@ -32,8 +34,6 @@
     </nav>
 
 
-
-    
     <div class="content">
         <div id="library" class="page-content active">
             <header class="content-header">
@@ -47,31 +47,51 @@
             </div>
         </div>
 
-         <!-- wrok here to add things to the artists page -->
+        <!-- ARTISTS: work here to add things to the artists page -->
         <div id="artists" class="page-content">
             <header class="content-header">
                 <h2>Artists</h2>
                 <p>Explore music by your favorite artists</p>
             </header>
             <ul class="artist-list">
-                <li><span>1</span> Keep</li>
-                <li><span>2</span> Parannoul</li>
-                <li><span>3</span> Static-X</li>
+                <li><img src="images/linkin.png" alt="Linkin Park" class="artist-image"><span>1</span>
+                    <div class="song-card">
+                        <p4>Linkin Park</p4>
+                        <br><img src="images/hybrid-theory.jpg" alt="Hybrid Theory" class="album-cover">
+                        <div class="song-info">
+                            <p3>Crawling</p3>
+                            <button class="play-button" onclick="pause(this)">
+                                <img src="images/play-icon.png" alt="Play" class="play-icon">
+                            </button>
+                        </div>
+                    </div>
+                </li>
+                <li><img src="images/death-grips-profile.jpg" alt="Death Grips" class="artist-image"><span>2</span>
+                    <p4>Death Grips</p4>
+                </li>
+                <li><img src="images/static-x.jpg" alt="Static-X" class="artist-image"><span>3</span> Static-X</li>
             </ul>
         </div>
 
-         <!-- work here to add things to the homepage -->
+        <!-- HOME: work here to add things to the homepage -->
         <div id="homepage" class="page-content">
             <header class="content-header">
                 <h2>Home Page</h2>
                 <p>Welcome back to your music dashboard.</p>
             </header>
             <div class="stats-banner">
-                <div class="stat-item"><h3>1,240</h3><p>Songs</p></div>
-                <div class="stat-item"><h3>45</h3><p>Artists</p></div>
+                <div class="stat-item">
+                    <h3>1,240</h3>
+                    <p>Songs</p>
+                </div>
+                <div class="stat-item">
+                    <h3>45</h3>
+                    <p>Artists</p>
+                </div>
             </div>
         </div>
     </div>
     <script src="/main.js" async></script>
 </body>
+
 </html>
