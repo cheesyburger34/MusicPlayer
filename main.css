@@ -10,14 +10,16 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #450f5a 0%, #5e0d5a 100%);
     min-height: 100vh;
-    display: flex; /* Aligns sidebar and main content side-by-side */
+    display: flex;
+    /* Aligns sidebar and main content side-by-side */
 }
 
 /* Sidebar styling */
 .left-nav {
     width: 20%;
     background: rgba(20, 20, 30, 0.95);
-    backdrop-filter: blur(10px); /* Frosted glass effect */
+    backdrop-filter: blur(10px);
+    /* Frosted glass effect */
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
@@ -37,7 +39,7 @@ body {
 /* Individual navigation link styles */
 .nav-item {
     position: relative;
-    margin-top: -100px; 
+    margin-top: -100px;
     padding: 5% 8%;
     min-height: 80%;
     color: rgba(255, 255, 255, 0.7);
@@ -47,11 +49,12 @@ body {
     font-weight: 500;
     cursor: pointer;
     border-radius: 2%;
-    transition: all 0.3s ease; /* Smooth hover effects */
+    transition: all 0.3s ease;
+    /* Smooth hover effects */
     display: flex;
     align-items: flex-start;
     overflow: hidden;
-    
+
 }
 
 /* Lighten background when hovering over an item */
@@ -94,8 +97,8 @@ body {
     backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
-    justify-content:center;
-    padding: 2% ;
+    justify-content: center;
+    padding: 2%;
     box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
 
 }
@@ -110,8 +113,8 @@ body {
     justify-content: center;
 }
 
-.play-btn{
-    padding : 15px 30px;
+.play-btn {
+    padding: 15px 30px;
     font-size: 16px;
     display: flex;
     justify-content: center;
@@ -129,8 +132,8 @@ body {
     background: rgba(243, 152, 228, 0.4);
 }
 
-.next-btn{
-    padding : 15px 30px;
+.next-btn {
+    padding: 15px 30px;
     font-size: 16px;
     display: flex;
     justify-content: center;
@@ -151,7 +154,7 @@ body {
 
 
 .content-header {
-    margin-bottom: 40%;
+    margin-bottom: 10%;
     width: 100%;
     text-align: left;
 }
@@ -199,10 +202,11 @@ body {
 /* 1. Setup the 3D Stage */
 .content {
     flex: 1;
-    perspective: 2000px; /* Increased perspective for a dramatic curve */
+    perspective: 2000px;
+    /* Increased perspective for a dramatic curve */
     position: relative;
     padding: 60px;
-    overflow: hidden;
+    overflow: auto;
     height: 90vh;
 }
 
@@ -214,7 +218,7 @@ body {
     left: 7.5%;
     opacity: 0;
     /* Pivot point is way off-screen to the right to create the curve */
-    transform-origin: 200% 50%; 
+    transform-origin: 200% 50%;
     backface-visibility: hidden;
     background: rgba(255, 255, 255, 0.03);
     padding: 40px;
@@ -239,6 +243,7 @@ body {
         opacity: 0;
         transform: rotateY(-90deg) translateX(100%) scale(0.5);
     }
+
     100% {
         opacity: 1;
         transform: rotateY(0deg) translateX(0) scale(1);
@@ -250,7 +255,7 @@ body {
     height: 60px;
     object-fit: cover;
     border-radius: 50%;
-    border: 2px solid #971591;    
+    border: 2px solid #971591;
 }
 
 .album-cover {
@@ -261,8 +266,8 @@ body {
     margin-top: 10px;
 }
 
-.play-button{
-    width:2.5vh;
+.play-button {
+    width: 2.5vh;
     height: 2.5vh;
     background: #c943ac;
     border: none;
@@ -282,7 +287,7 @@ body {
     height: 2.5vh;
 }
 
-p3{
+p3 {
     font-size: 14px;
     color: rgba(255, 255, 255, 0.7);
     font-weight: 100;
@@ -290,7 +295,7 @@ p3{
     margin-top: 4px;
 }
 
-p4{
+p4 {
     font-size: 24px;
     color: #c943ac;
     font-weight: bold;
@@ -303,4 +308,24 @@ p4{
     align-items: top;
     gap: 10px;
     margin-top: -1px;
+}
+
+::-webkit-scrollbar {
+    width: 2vh;
+}
+
+::-webkit-scrollbar-track {
+    visibility: hidden;
+}
+
+::-webkit-scrollbar-thumb {
+    /* In case we want to change the scrollbar to be visible again
+    background: #95129e;
+    border-radius: 10px; */
+    visibility: hidden;
+
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #660c6d;
 }
