@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Player - Navigation</title>
-    <link rel="stylesheet" href="/main.css">
+    <link rel="stylesheet" href="/public/main.css">
 </head>
 
 <body>
@@ -24,12 +24,14 @@
                 <span>Home Page</span>
             </a>
         </div>
+
     </nav>
 
-    <nav class ="btm-player">
+    <nav class="btm-player">
         <div class="player-controls">
             <button class="play-btn">Play</button>
             <button class="next-btn">Next</button>
+            <button class="add-btn" onclick="addMusic(this)">+</button>
         </div>
     </nav>
 
@@ -54,22 +56,26 @@
                 <p>Explore music by your favorite artists</p>
             </header>
             <ul class="artist-list">
-                <li><img src="images/linkin.png" alt="Linkin Park" class="artist-info"><span>1</span>
+                <li><img src="/images/linkin.png" alt="Linkin Park" class="artist-img">
                     <div class="song-card">
                         Linkin Park
-                        <br><img src="images/hybrid-theory.jpg" alt="Hybrid Theory" class="album-cover">
+                        <br><img src="/images/hybrid-theory.jpg" alt="Hybrid Theory" class="album-cover">
                         <div class="song-info">
                             <p3>Crawling</p3>
                             <button class="play-button" onclick="pause(this)">
-                                <img src="images/play-icon.png" alt="Play" class="play-icon">
+                                <img src="/images/play-icon.png" alt="Play" class="play-icon">
                             </button>
                         </div>
                     </div>
                 </li>
-                <li><img src="images/death-grips-profile.jpg" alt="Death Grips" class="artist-info"><span>2</span>
+                <li>
+                    <img src="/images/death-grips-profile.jpg" alt="Death Grips" class="artist-img">
                     Death Grips
                 </li>
-                <li><img src="images/static-x.jpg" alt="Static-X" class="artist-info"><span>3</span> Static-X</li>
+                <li>
+                    <img src="/images/static-x.jpg" alt="Static-X" class="artist-img">
+                    Static-X
+                </li>
             </ul>
         </div>
 
@@ -91,7 +97,7 @@
             </div>
         </div>
     </div>
-    <script src="/main.js" async></script>
+    <script src="/public/main.js" async></script>
 </body>
 
 </html>

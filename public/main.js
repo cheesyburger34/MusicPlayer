@@ -6,13 +6,15 @@ const pageContents = document.querySelectorAll('.page-content');
 const navContainer = document.querySelector('.nav-items');
 const stackOffset = 20;
 
+let audioFiles = [];
+
 /**
  * Initializes or resets the visual stack layout
  */
 function updateStack() {
     const items = Array.from(navContainer.querySelectorAll('.nav-item'));
     const baseHeight = items[0]?.offsetHeight || 140;
-    
+
     // Match container height to the first item and set initial z-index/position
     navContainer.style.height = `${baseHeight}px`;
     items.forEach((item, index) => {
@@ -38,7 +40,7 @@ function activateItem(clickedItem) {
     if (targetPage) targetPage.classList.add('active');
 
     const activeIndex = items.indexOf(clickedItem);
-    
+
     items.forEach((item, index) => {
         // Track if items are visually above or below the current selection
         item.classList.remove('above-active', 'below-active');
@@ -62,11 +64,11 @@ function activateItem(clickedItem) {
     if (currentPage) {
         currentPage.classList.remove('active');
         currentPage.classList.add('exit');
-        
+
         // Cleanup after animation finishes
         setTimeout(() => {
             currentPage.classList.remove('exit');
-        }, 800); 
+        }, 800);
     }
 
     if (nextPage) {
@@ -114,11 +116,50 @@ window.addEventListener('load', () => {
 });
 window.addEventListener('resize', updateStack);
 
-function pause(button){
+function pause(button) {
     const playIcon = button.querySelector('.play-icon');
     if (playIcon.src.includes('play-icon.png')) {
-        playIcon.src = 'images/pause-icon.png';
+        playIcon.src = '/images/pause-icon.png';
     } else {
-        playIcon.src = 'images/play-icon.png';
+        playIcon.src = '/images/play-icon.png';
     }
 }
+
+function addMusic() {
+    const addBtn = document.querySelector('.add-btn');
+    if (!addBtn) return;
+
+    addBtn.onclick = () => {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'audio/*';
+        fileInput.multiple = true;
+
+        fileInput.onchange = async (event) => {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+
+            // Prepare the data to send to the server
+            const formData = new FormData();
+            files.forEach(file => {
+                formData.append('songs', file);
+            });
+
+            try {
+                const response = await fetch('http://localhost:3000/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert('Music uploaded to server successfully!');
+                }
+            } catch (err) {
+                console.error('Upload failed:', err);
+            }
+        };
+
+        fileInput.click();
+    };
+}
+
