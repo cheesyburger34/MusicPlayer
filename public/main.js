@@ -163,3 +163,85 @@ function addMusic() {
     };
 }
 
+
+
+// This function creates the HTML for a single music card/row
+function displayMusic(tracks) {
+    const libraryGrid = document.getElementById('library-grid');
+    const artistList = document.getElementById('artist-list');
+
+    // Clear placeholders if this is the first upload
+    if (tracks.length > 0) {
+        libraryGrid.innerHTML = '';
+        artistList.innerHTML = '';
+    }
+
+    tracks.forEach(track => {
+        // 1. Add to Library Grid
+        const card = document.createElement('div');
+        card.className = 'music-card';
+        card.innerHTML = `
+            <img src="${track.cover}" alt="Cover" class="album-cover-small">
+            <div class="card-info">
+                <strong>${track.title}</strong>
+                <p>${track.artist}</p>
+            </div>
+        `;
+        libraryGrid.appendChild(card);
+
+        // 2. Add to Artist List
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <div class="song-card">
+                <img src="${track.cover}" alt="Album Cover" class="album-cover">
+                <div class="song-info">
+                    <strong>${track.artist}</strong>
+                    <p>${track.title}</p>
+                    <button class="play-button" onclick="playTrack('${track.url}')">
+                        Play
+                    </button>
+                </div>
+            </div>
+        `;
+        artistList.appendChild(li);
+    });
+}
+
+// Updated addMusic function to handle the auto-fill
+async function addMusic() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'audio/*';
+    fileInput.multiple = true;
+
+    fileInput.onchange = async (event) => {
+        const files = Array.from(event.target.files);
+        const formData = new FormData();
+        files.forEach(file => formData.append('songs', file));
+
+        try {
+            // Change 'localhost' to your IP if testing on mobile
+            const response = await fetch('http://localhost:3000/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            
+            if (data.tracks) {
+                // This is the "Auto-Fill" magic
+                displayMusic(data.tracks);
+            }
+        } catch (err) {
+            console.error('Upload error:', err);
+        }
+    };
+
+    fileInput.click();
+}
+
+// Helper for playing (simple version)
+function playTrack(url) {
+    const audio = new Audio(url);
+    audio.play();
+}
