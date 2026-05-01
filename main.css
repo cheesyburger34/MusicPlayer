@@ -329,3 +329,16 @@ p4 {
 ::-webkit-scrollbar-thumb:hover {
     background: #660c6d;
 }
+
+.volume-slider {
+    width: 150px;
+    cursor: pointer;
+}
+
+.volume-label {
+    margin-right: 10px;
+    font-size: 25px;
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    
+}

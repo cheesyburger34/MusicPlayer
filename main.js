@@ -114,11 +114,194 @@ window.addEventListener('load', () => {
 });
 window.addEventListener('resize', updateStack);
 
-function pause(button){
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Icon path constants
+const PLAY_ICON_PATH = 'images/play-icon.png';
+const PAUSE_ICON_PATH = 'images/pause-icon.png';
+
+let song = new Audio('audio/death-grips-takyon.mp3'); // to change with Ben's system
+
+
+function playMusic(button){
     const playIcon = button.querySelector('.play-icon');
-    if (playIcon.src.includes('play-icon.png')) {
-        playIcon.src = 'images/pause-icon.png';
-    } else {
-        playIcon.src = 'images/play-icon.png';
+    if (playIcon) {
+        if (playIcon.src.includes('play-icon.png')) {
+            playIcon.src = PAUSE_ICON_PATH;
+            song.play();
+        } else {
+            playIcon.src = PLAY_ICON_PATH;
+            song.pause();
+        }
     }
 }
+
+// Example: Using data-attribute for better management
+document.querySelectorAll('.play-btn').forEach(button => {
+  button.addEventListener('click', (e) => {
+    const songId = e.target.getAttribute('data-song-id');
+    if (songId) {
+      // Example: play the corresponding audio file
+      if (song) {
+        song.pause();
+        song.currentTime = 0;
+      }
+      song = new Audio(`audio/${songId}.mp3`);
+      song.play();
+    }
+  });
+});
+
+const volumeSlider = document.querySelector('.volume-slider');
+const volumeLabel = document.querySelector('.volume-label');
+
+volumeSlider.addEventListener('input', (e) => {
+    let volume = e.target.value;
+    if (song) {
+        song.volume = volume / 100;  // Convert 0-100 to 0-1
+    }
+    volumeLabel.textContent = volume + '%';
+});
