@@ -125,59 +125,87 @@ function pause(button) {
     }
 }
 
-function addMusic() {
-    const addBtn = document.querySelector('.add-btn');
-    if (!addBtn) return;
-
-    addBtn.onclick = () => {
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'audio/*';
-        fileInput.multiple = true;
-
-        fileInput.onchange = async (event) => {
-            const files = Array.from(event.target.files);
-            if (files.length === 0) return;
-
-            // Prepare the data to send to the server
-            const formData = new FormData();
-            files.forEach(file => {
-                formData.append('songs', file);
-            });
-
-            try {
-                const response = await fetch('http://localhost:3000/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    alert('Music uploaded to server successfully!');
-                }
-            } catch (err) {
-                console.error('Upload failed:', err);
-            }
-        };
-
-        fileInput.click();
-    };
+/**
+ * 1. THE AUTO-LOADER
+ * This runs as soon as the page opens to fetch existing music from your folder.
+ */
+async function loadExistingMusic() {
+    try {
+        // You'll need a simple GET route on your server for this (see note below)
+        const response = await fetch('http://localhost:3000/list-music');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.tracks) displayMusic(data.tracks);
+        }
+    } catch (err) {
+        console.error('Could not load library:', err);
+    }
 }
 
+/**
+ * 2. THE UPLOAD HANDLER
+ * Handles picking files and sending them to your Multer server.
+ */
+async function addMusic() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'audio/*';
+    fileInput.multiple = true;
 
+    fileInput.onchange = async (event) => {
+        const files = Array.from(event.target.files);
+        if (files.length === 0) return;
 
-// This function creates the HTML for a single music card/row
+        const formData = new FormData();
+        files.forEach(file => formData.append('songs', file));
+
+        try {
+            const response = await fetch('http://localhost:3000/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            
+            if (data.tracks) {
+                // Auto-fills the page with the songs just uploaded
+                displayMusic(data.tracks);
+                alert('Upload complete!');
+            }
+        } catch (err) {
+            console.error('Upload failed:', err);
+        }
+    };
+
+    fileInput.click();
+}
+
+/**
+ * 3. THE UI GENERATOR
+ * Turns the server's data into HTML elements.
+ */
 function displayMusic(tracks) {
     const libraryGrid = document.getElementById('library-grid');
     const artistList = document.getElementById('artist-list');
 
-    // Clear placeholders if this is the first upload
+    // Prevent errors if the HTML containers don't exist yet
+    if (!libraryGrid || !artistList) return;
+
+    // Clear "Recently Added" placeholders if we have real data
     if (tracks.length > 0) {
         libraryGrid.innerHTML = '';
         artistList.innerHTML = '';
     }
 
+    // Group tracks by artist
+    const artistMap = {};
     tracks.forEach(track => {
-        // 1. Add to Library Grid
+        if (!artistMap[track.artist]) artistMap[track.artist] = [];
+        artistMap[track.artist].push(track);
+    });
+
+    // Create Library Grid Cards
+    tracks.forEach(track => {
         const card = document.createElement('div');
         card.className = 'music-card';
         card.innerHTML = `
@@ -188,60 +216,45 @@ function displayMusic(tracks) {
             </div>
         `;
         libraryGrid.appendChild(card);
-
-        // 2. Add to Artist List
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <div class="song-card">
-                <img src="${track.cover}" alt="Album Cover" class="album-cover">
-                <div class="song-info">
-                    <strong>${track.artist}</strong>
-                    <p>${track.title}</p>
-                    <button class="play-button" onclick="playTrack('${track.url}')">
-                        Play
-                    </button>
-                </div>
-            </div>
-        `;
-        artistList.appendChild(li);
     });
+
+    // Create Artist Sections
+    for (const artist in artistMap) {
+        const artistSection = document.createElement('div');
+        artistSection.className = 'artist-section';
+        artistSection.innerHTML = `<h2>${artist}</h2>`;
+        const scrollContainer = document.createElement('div');
+        scrollContainer.className = `artist-scroll ${artist.replace(/\s+/g, '-')}`;
+        scrollContainer.style.display = 'flex';
+        scrollContainer.style.flexDirection = 'row';
+        scrollContainer.style.overflowX = 'auto';
+        scrollContainer.style.paddingBottom = '10px';
+        artistMap[artist].forEach(track => {
+            const songCard = document.createElement('div');
+            songCard.className = 'song-card';
+            songCard.style.marginRight = '30px';
+            songCard.style.width = '100px';
+            songCard.innerHTML = `
+                <img src="${track.cover}" alt="Album Cover" class="album-cover" onclick="playTrack('${track.url}')">
+                <div class="song-info">
+                    <p>${track.title}</p>
+                </div>
+            `;
+            scrollContainer.appendChild(songCard);
+        });
+        artistSection.appendChild(scrollContainer);
+        artistList.appendChild(artistSection);
+    }
 }
 
-// Updated addMusic function to handle the auto-fill
-async function addMusic() {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'audio/*';
-    fileInput.multiple = true;
-
-    fileInput.onchange = async (event) => {
-        const files = Array.from(event.target.files);
-        const formData = new FormData();
-        files.forEach(file => formData.append('songs', file));
-
-        try {
-            // Change 'localhost' to your IP if testing on mobile
-            const response = await fetch('http://localhost:3000/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-            
-            if (data.tracks) {
-                // This is the "Auto-Fill" magic
-                displayMusic(data.tracks);
-            }
-        } catch (err) {
-            console.error('Upload error:', err);
-        }
-    };
-
-    fileInput.click();
-}
-
-// Helper for playing (simple version)
+/**
+ * 4. THE PLAYER
+ */
 function playTrack(url) {
+    // Basic global audio player logic
     const audio = new Audio(url);
     audio.play();
 }
+
+// Call the auto-loader when the script runs
+loadExistingMusic();
