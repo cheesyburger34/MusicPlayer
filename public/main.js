@@ -15,7 +15,7 @@ function updateStack() {
     const items = Array.from(navContainer.querySelectorAll('.nav-item'));
     const baseHeight = items[0]?.offsetHeight || 140;
 
-    // Match container height to the first item and set initial z-index/position
+    // Match container height to the first item and set initial z position
     navContainer.style.height = `${baseHeight}px`;
     items.forEach((item, index) => {
         item.style.zIndex = items.length - index;
@@ -266,3 +266,55 @@ function playTrack(url) {
 
 // Call the auto-loader when the script runs
 loadExistingMusic();
+
+// Icon path constants
+const PLAY_ICON_PATH = 'images/play-icon.png';
+const PAUSE_ICON_PATH = 'images/pause-icon.png';
+
+let song = new Audio('audio/death-grips-takyon.mp3'); // to change with Ben's system
+
+
+function playMusic(button) {
+
+    // Using data-attribute for better management
+    document.querySelectorAll('.play-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const songId = button.getAttribute('data-song-id'); // in case songId is needed for future expansion, currently not used as we have a single song
+            if (songId) {
+                // play the corresponding audio file
+                if (song) {
+                    song.pause();
+                    song.currentTime = 0;
+                    song.src = ''; // Clean up previous audio source
+                    song = new Audio(`audio/${songId}.mp3`);
+                    song.play().catch(error => {
+                        console.error('Playback failed:', error);
+                    });
+                    song.currentTime = 0;
+                    song.play();
+                }
+            }
+        });
+    });
+    const playIcon = button.querySelector('.play-icon');
+    if (playIcon) {
+        if (playIcon.src.includes('play-icon.png')) {
+            playIcon.src = PAUSE_ICON_PATH;
+            song.play();
+        } else {
+            playIcon.src = PLAY_ICON_PATH;
+            song.pause();
+        }
+    }
+}
+
+const volumeSlider = document.querySelector('.volume-slider');
+const volumeLabel = document.querySelector('.volume-label');
+
+volumeSlider.addEventListener('input', (e) => {
+    let volume = e.target.value;
+    if (song) {
+        song.volume = volume / 100;  // Convert 0-100 to 0-1
+    }
+    volumeLabel.textContent = volume + '%';
+});
