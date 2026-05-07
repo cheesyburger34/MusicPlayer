@@ -1,5 +1,15 @@
+# SQLite database
 library.db
-musicLibrary/
+library.db-journal
+
+# 1. Ignore all contents of the music library
+musicLibrary/**/*
+
+# 2. But keep the directory structure and the default cover
+!musicLibrary/
+!musicLibrary/covers/
+!musicLibrary/covers/default-cover.webp
+
 
 # Logs
 logs

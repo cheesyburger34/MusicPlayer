@@ -36,9 +36,7 @@
         </div>
     </nav>
 
-    <div class="scroller"></div>
-
-    <div class="content">
+ <div class="content">
         <div id="library" class="page-content active">
             <header class="content-header">
                 <h2>Library</h2>
@@ -49,68 +47,13 @@
             </div>
         </div>
 
-        <!-- ARTISTS: work here to add things to the artists page -->
         <div id="artists" class="page-content">
             <header class="content-header">
                 <h2>Artists</h2>
                 <p>Explore music by your favorite artists</p>
             </header>
-            <ul class="artist-list">
-                <li><img src="/images/linkin-park-profile.png" alt="Linkin Park" class="artist-img"><span>1</span>
-                    <div class="song-card">
-                        <p4>Linkin Park</p4>
-                        <br><img src="/images/hybrid-theory.jpg" alt="Hybrid Theory" class="album-cover">
-                        <div class="song-info">
-                            <audio id="Crawling" src="/audio/linkin-park-crawling.mp3"></audio>
-                            Crawling
-                            <button class="play-button" onclick="playMusic(this)">
-                                <img src="/images/play-icon.png" alt="Play" class="play-icon">
-                            </button>
-                        </div>
-                    </div>
-                </li>
-                <li><img src="/images/death-grips-profile.jpg" alt="Death Grips" class="artist-img"><span>2</span>
-                    <div class="song-card">
-                        <p4>Death Grips</p4>
-                        <br><img src="/images/death-grips-exmil.png" alt="Death Grips" class="album-cover">
-                        <div class="song-info">
-                            <audio id="Takyon (Death Yon)" src="/audio/death-grips-takyon.mp3"></audio>
-                            Takyon
-                            <button class="play-button" onclick="playMusic(this)">
-                                <img src="/images/play-icon.png" alt="Play" class="play-icon">
-                            </button>
-                        </div>
-                    </div>
-                </li>
-                <li><img src="/images/static-x-profile.jpg" alt="Static-X" class="artist-img"><span>3</span>
-                    <div class="song-card">
-                        <p4>Static-X</p4>
-                        <br><img src="/images/static-x-push-it.jpg" alt="Static-X" class="album-cover">
-                        <div class="song-info">
-                            <audio id="Push It" src="/audio/static-x-push-it.mp3"></audio>
-                            Push It
-                            <button class="play-button" onclick="playMusic(this)">
-                                <img src="/images/play-icon.png" alt="Play" class="play-icon">
-                            </button>
-                        </div>
-                    </div>
-                </li>
-                <li><img src="/images/annahstasia-profile.jpg" alt="Annah Stasia" class="artist-img"><span>4</span>
-                    <div class="song-card">
-                        <p4>Annah Stasia</p4>
-                        <br><img src="/images/tether.jpg" alt="Annah Stasia" class="album-cover">
-                        <div class="song-info">
-                            <audio id="Be Kind" src="/audio/annahstasia-be-kind.mp3"></audio>
-                            Be Kind
-                            <button class="play-button" onclick="playMusic(this)">
-                                <img src="/images/play-icon.png" alt="Play" class="play-icon">
-                            </button>
-                        </div>
-                    </div>
-                </li>
-            </ul>
+            <ul id="artist-list" class="artist-list"></ul>
         </div>
-
 
         <div id="explorePage" class="page-content">
             <header class="content-header">
@@ -135,11 +78,11 @@
                 <p>View an open album here</p>
             </header>
 
+            </div>
         </div>
-    </div>
     </div>
 
     <script src="main.js" async></script>
 </body>
-
 </html>
+

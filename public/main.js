@@ -29,6 +29,16 @@ function updateStack() {
 function activateItem(clickedItem) {
     const items = Array.from(navContainer.querySelectorAll('.nav-item'));
 
+    const albumPage = document.getElementById('albumPage');
+    if (albumPage && albumPage.classList.contains('active')) {
+        albumPage.classList.remove('active');
+        albumPage.classList.add('exit');
+        setTimeout(() => {
+            albumPage.classList.remove('exit');
+            albumPage.style.display = 'none';
+        }, 800);
+    }
+
     // Reset active states for all navigation items and content pages
     items.forEach(item => item.classList.remove('active'));
     pageContents.forEach(page => page.classList.remove('active'));
@@ -38,6 +48,9 @@ function activateItem(clickedItem) {
     const pageId = clickedItem.dataset.page;
     const targetPage = document.getElementById(pageId);
     if (targetPage) targetPage.classList.add('active');
+
+    const currentPage = document.querySelector('.page-content.active');
+    const nextPage = targetPage;
 
     const activeIndex = items.indexOf(clickedItem);
 
@@ -211,19 +224,30 @@ function displayMusic(tracks) {
         albumMap[track.album].push(track);
     });
 
-    // Create Library Grid Cards
-    tracks.forEach(track => {
+    // Create Library Grid Cards (Grouped by Album)
+    for (const albumName in albumMap) {
+        const albumTracks = albumMap[albumName];
+        // Use the first track in the album to get the cover and artist name
+        const firstTrack = albumTracks[0];
+
         const card = document.createElement('div');
         card.className = 'music-card';
+        card.style.cursor = 'pointer';
+
+        // We display the Album Title and the Artist
         card.innerHTML = `
-            <img src="${track.cover}" alt="Cover" class="album-cover-small">
-            <div class="card-info">
-                <strong>${track.title}</strong>
-                <p>${track.artist}</p>
-            </div>
-        `;
+        <img src="${firstTrack.cover}" alt="${albumName}" class="album-cover-small">
+        <div class="card-info">
+            <strong>${albumName}</strong>
+            <p>${firstTrack.artist}</p>
+            <p3>${albumTracks.length} Tracks</p3>
+        </div>
+    `;
+        card.onclick = () => switchToAlbumPage(albumName, albumTracks);
+
         libraryGrid.appendChild(card);
-    });
+    }
+
 
     // Create Artist Sections
     for (const artist in artistMap) {
@@ -234,9 +258,6 @@ function displayMusic(tracks) {
         const scrollContainer = document.createElement('div');
         scrollContainer.className = `artist-scroll ${artist.replace(/\s+/g, '-')}`;
         scrollContainer.style.display = 'flex';
-        scrollContainer.style.flexDirection = 'row';
-        scrollContainer.style.overflowX = 'auto';
-        scrollContainer.style.paddingBottom = '10px';
         artistMap[artist].forEach(track => {
             const songCard = document.createElement('div');
             songCard.className = 'song-card';
@@ -255,6 +276,55 @@ function displayMusic(tracks) {
     }
 }
 
+function switchToAlbumPage(albumName, tracks) {
+    // 1. Find the current active page and the album page
+    const currentPage = document.querySelector('.page-content.active');
+    const nextPage = document.getElementById('albumPage');
+
+    if (!nextPage) return;
+
+    // 2. Populate the Album Page content
+    const firstTrack = tracks[0];
+    nextPage.innerHTML = `
+        <header class="content-header">
+            <button class="play-button" onclick="goBackToLibrary()" style="margin-bottom: 20px;">Back</button>
+            <div style="display: flex; gap: 30px; align-items: end;">
+                <img src="${firstTrack.cover}" class="album-cover" style="width: 250px; height: 250px;">
+                <div>
+                    <p4 style="font-size: 48px;">${albumName}</p4>
+                    <p style="color: #c943ac; font-size: 24px;">${firstTrack.artist}</p>
+                </div>
+            </div>
+        </header>
+        <div class="track-list" style="margin-top: 40px;">
+            ${tracks.map((track, index) => `
+                <div class="artist-list li" onclick="playTrack('${track.url}')" style="cursor: pointer;">
+                    <span>${index + 1}</span>
+                    <div style="flex: 1;"><strong>${track.title}</strong></div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // 3. Execute your "Curved" animation logic
+    if (currentPage && currentPage !== nextPage) {
+        currentPage.classList.remove('active');
+        currentPage.classList.add('exit');
+        setTimeout(() => currentPage.classList.remove('exit'), 800);
+    }
+
+
+    nextPage.style.display = 'block'; // Force it to exist in the layout
+    setTimeout(() => {
+        nextPage.classList.add('active');
+    }, 50);
+}
+
+function goBackToLibrary() {
+    const libraryItem = document.querySelector('[data-page="library"]');
+    if (libraryItem) activateItem(libraryItem); 
+}
+
 /**
  * 4. THE PLAYER
  */
@@ -267,6 +337,7 @@ function playTrack(url) {
 // Call the auto-loader when the script runs
 loadExistingMusic();
 
+/*
 // Icon path constants
 const PLAY_ICON_PATH = 'images/play-icon.png';
 const PAUSE_ICON_PATH = 'images/pause-icon.png';
@@ -318,3 +389,4 @@ volumeSlider.addEventListener('input', (e) => {
     }
     volumeLabel.textContent = volume + '%';
 });
+*/

@@ -112,8 +112,8 @@ body {
     justify-content: space-between;
 }
 
-.play-btn{
-    padding : 2% 30px;
+.play-btn {
+    padding: 2% 30px;
     font-size: 16px;
     display: flex;
     justify-content: center;
@@ -131,8 +131,9 @@ body {
     background: rgba(243, 152, 228, 0.4);
 }
 
-.next-btn{
-    padding : 2% 30px;;
+.next-btn {
+    padding: 2% 30px;
+    ;
     font-size: 16px;
     display: flex;
     justify-content: center;
@@ -150,8 +151,9 @@ body {
     background: rgba(243, 152, 228, 0.4);
 }
 
-.add-btn{
-    padding : 2% 30px;;
+.add-btn {
+    padding: 2% 30px;
+    ;
     font-size: 16px;
     display: flex;
     justify-content: center;
@@ -222,6 +224,31 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Horizontal Scroll Container for Artist's Songs */
+.artist-scroll {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 15px;
+    gap: 15px;
+}
+
+/* Horizontal Scrollbar Styling */
+.artist-scroll::-webkit-scrollbar {
+    height: 8px;
+}
+
+.artist-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.artist-scroll::-webkit-scrollbar-thumb {
+    background: #95129e;
+    border-radius: 10px;
+}
+
 /* 1. Setup the 3D Stage */
 .content {
     flex: 1;
@@ -281,8 +308,10 @@ body {
     object-fit: cover;
     border-radius: 50%;
     border: 2px solid #971591;
-    vertical-align: middle; /* Aligns image with the text */
-    margin-right: 15px;    /* Adds space before the name */
+    vertical-align: middle;
+    /* Aligns image with the text */
+    margin-right: 15px;
+    /* Adds space before the name */
 }
 
 /* Styling the rank number (the span) */
@@ -291,7 +320,8 @@ li span {
     color: #c943ac;
     font-weight: 900;
     font-family: 'Courier New', Courier, monospace;
-    margin-right: 10px;    /* Space between number and name */
+    margin-right: 10px;
+    /* Space between number and name */
 }
 
 li {
@@ -299,7 +329,8 @@ li {
     display: flex;
     align-items: center;
     margin-bottom: 10px;
-    font-family: sans-serif; /* Cleaner font for the artist name */
+    font-family: sans-serif;
+    /* Cleaner font for the artist name */
     color: #c943ac;
     font-weight: bold;
     font-size: 24px;
@@ -358,18 +389,17 @@ p4 {
 }
 
 ::-webkit-scrollbar {
-    width: 2vh;
+    width: 8px;
 }
+
 
 ::-webkit-scrollbar-track {
     visibility: hidden;
 }
 
 ::-webkit-scrollbar-thumb {
-    /* In case we want to change the scrollbar to be visible again
     background: #95129e;
-    border-radius: 10px; */
-    visibility: hidden;
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -386,4 +416,39 @@ p4 {
     font-size: 25px;
     color: rgba(255, 255, 255, 0.7);
     display: flex;
+}
+
+.music-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.music-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-5px);
+}
+
+.album-cover-small {
+    width: 150px; /* Bigger for an album-centric view */
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    margin-bottom: 12px;
+}
+
+.track-list .artist-list.li {
+    transition: background 0.2s ease;
+    border-radius: 8px;
+    padding: 10px 20px;
+}
+
+.track-list .artist-list.li:hover {
+    background: rgba(201, 67, 172, 0.1);
 }

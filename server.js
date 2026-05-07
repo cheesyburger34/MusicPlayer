@@ -100,7 +100,7 @@ app.post('/upload', upload.array('songs'), async (req, res) => {
 
             // 4. Handle Cover Art
             const picture = metadata.common.picture && metadata.common.picture[0];
-            let coverUrl = '/musicLibrary/covers/default-cover.png';
+            let coverUrl = '/musicLibrary/covers/default-cover.webp';
 
             if (picture) {
                 const imageName = `${path.parse(fileName).name}.jpg`;
@@ -178,6 +178,22 @@ async function syncLibrary() {
     console.log(`Checking ${files.length} files for sync...`);
 
     for (const fullPath of files) {
+        // 1. Get all tracks currently in the Database
+        const dbTracks = db.prepare('SELECT url FROM tracks').all();
+
+        for (const track of dbTracks) {
+            // Convert the URL back to a physical disk path
+            // URL: /musicLibrary/Artist/song.mp3 -> Path: musicLibrary/Artist/song.mp3
+            const relativePath = track.url.replace('/musicLibrary/', '');
+            const fullPath = path.join(musicDir, relativePath);
+
+            // 2. If the file is missing from the disk, DELETE it from the DB
+            if (!fs.existsSync(fullPath)) {
+                console.log(`🗑 Removing missing file from DB: ${relativePath}`);
+                db.prepare('DELETE FROM tracks WHERE url = ?').run(track.url);
+            }
+        }
+
         const relPathUrl = `/musicLibrary/${path.relative(musicDir, fullPath).replace(/\\/g, '/')}`;
 
         // Check if we already have this file in SQLite
