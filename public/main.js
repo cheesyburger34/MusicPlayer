@@ -334,6 +334,18 @@ function playTrack(url) {
     audio.play();
 }
 
+function stopMusic() {
+    // This will stop all currently playing audio elements
+    const audios = document.querySelectorAll('audio');
+    audios.forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+    });
+}
+    
+
+
+
 // Call the auto-loader when the script runs
 loadExistingMusic();
 
