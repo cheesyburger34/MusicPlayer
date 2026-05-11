@@ -36,7 +36,7 @@ function activateItem(clickedItem) {
         setTimeout(() => {
             albumPage.classList.remove('exit');
             albumPage.style.display = 'none';
-        }, 800);
+        }, 100);
     }
 
     // Reset active states for all navigation items and content pages
@@ -81,7 +81,7 @@ function activateItem(clickedItem) {
         // Cleanup after animation finishes
         setTimeout(() => {
             currentPage.classList.remove('exit');
-        }, 800);
+        }, 100);
     }
 
     if (nextPage) {
@@ -287,7 +287,7 @@ function switchToAlbumPage(albumName, tracks) {
     const firstTrack = tracks[0];
     nextPage.innerHTML = `
         <header class="content-header">
-            <button class="play-button" onclick="goBackToLibrary()" style="margin-bottom: 20px;">Back</button>
+            <button class="back-button" onclick="goBackToLibrary()" style="margin-bottom: 20px;">Back</button>
             <div style="display: flex; gap: 30px; align-items: end;">
                 <img src="${firstTrack.cover}" class="album-cover" style="width: 250px; height: 250px;">
                 <div>
@@ -310,7 +310,7 @@ function switchToAlbumPage(albumName, tracks) {
     if (currentPage && currentPage !== nextPage) {
         currentPage.classList.remove('active');
         currentPage.classList.add('exit');
-        setTimeout(() => currentPage.classList.remove('exit'), 800);
+        setTimeout(() => currentPage.classList.remove('exit'), 100);
     }
 
 
@@ -347,7 +347,7 @@ function stopMusic() {
 
 
 // Call the auto-loader when the script runs
-loadExistingMusic();
+//loadExistingMusic();
 
 /*
 // Icon path constants
