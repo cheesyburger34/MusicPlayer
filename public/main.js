@@ -7,6 +7,7 @@ const navContainer = document.querySelector('.nav-items');
 const stackOffset = 20;
 
 let audioFiles = [];
+let lastVisitedPageId = 'library';
 
 /**
  * Initializes or resets the visual stack layout
@@ -51,6 +52,9 @@ function activateItem(clickedItem) {
 
     const currentPage = document.querySelector('.page-content.active');
     const nextPage = targetPage;
+    if (currentPage && currentPage !== nextPage && currentPage.id !== 'albumPage') {
+        lastVisitedPageId = currentPage.id;
+    }
 
     const activeIndex = items.indexOf(clickedItem);
 
@@ -100,7 +104,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     });
 });
 
-// Refresh stack calculations on page load and window resize
+// Refresh stack calculations on page load
 window.addEventListener('load', () => {
     updateStack();
     // Set default active item to library
@@ -127,7 +131,6 @@ window.addEventListener('load', () => {
         if (firstPage) firstPage.classList.add('active');
     }
 });
-window.addEventListener('resize', updateStack);
 
 function pause(button) {
     const playIcon = button.querySelector('.play-icon');
@@ -144,7 +147,6 @@ function pause(button) {
  */
 async function loadExistingMusic() {
     try {
-        // You'll need a simple GET route on your server for this (see note below)
         const response = await fetch('http://localhost:3000/list-music');
         if (response.ok) {
             const data = await response.json();
@@ -197,157 +199,247 @@ async function addMusic() {
  * 3. THE UI GENERATOR
  * Turns the server's data into HTML elements.
  */
+
 function displayMusic(tracks) {
     const libraryGrid = document.getElementById('library-grid');
     const artistList = document.getElementById('artist-list');
 
-    // Prevent errors if the HTML containers don't exist yet
     if (!libraryGrid || !artistList) return;
 
-    // Clear "Recently Added" placeholders if we have real data
     if (tracks.length > 0) {
         libraryGrid.innerHTML = '';
         artistList.innerHTML = '';
     }
 
-    // Group tracks by artist
+    // Grouping Logic
     const artistMap = {};
+    const albumMap = {};
     tracks.forEach(track => {
         if (!artistMap[track.artist]) artistMap[track.artist] = [];
         artistMap[track.artist].push(track);
-    });
-
-    //Group tracks by album
-    const albumMap = {};
-    tracks.forEach(track => {
+        
         if (!albumMap[track.album]) albumMap[track.album] = [];
         albumMap[track.album].push(track);
     });
 
-    // Create Library Grid Cards (Grouped by Album)
+    // Create Library Grid Cards
     for (const albumName in albumMap) {
         const albumTracks = albumMap[albumName];
-        // Use the first track in the album to get the cover and artist name
         const firstTrack = albumTracks[0];
 
         const card = document.createElement('div');
-        card.className = 'music-card';
-        card.style.cursor = 'pointer';
-
-        // We display the Album Title and the Artist
+        card.className = 'music-card'; // Styling handled in CSS
         card.innerHTML = `
-        <img src="${firstTrack.cover}" alt="${albumName}" class="album-cover-small">
-        <div class="card-info">
-            <strong>${albumName}</strong>
-            <p>${firstTrack.artist}</p>
-            <p3>${albumTracks.length} Tracks</p3>
-        </div>
-    `;
+            <img src="${firstTrack.cover}" alt="${albumName}" class="album-cover">
+            <div class="card-info">
+                <strong>${albumName}</strong>
+                <p>${firstTrack.artist}</p>
+                <span class="track-count">${albumTracks.length} Tracks</span>
+            </div>
+        `;
         card.onclick = () => switchToAlbumPage(albumName, albumTracks);
-
         libraryGrid.appendChild(card);
     }
-
 
     // Create Artist Sections
     for (const artist in artistMap) {
         const artistSection = document.createElement('div');
-        artistSection.className = 'artist-section';
-        artistSection.style.marginBottom = '40px';
-        artistSection.innerHTML = `<h2>${artist}</h2>`;
+        artistSection.className = 'artist-group';
+
+        const artistTitle = document.createElement('h2');
+        artistTitle.className = 'artist-name artist-title-clickable';
+        artistTitle.textContent = artist;
+        artistTitle.onclick = () => switchToArtistPage(artist, artistMap[artist]);
+
         const scrollContainer = document.createElement('div');
         scrollContainer.className = `artist-scroll ${artist.replace(/\s+/g, '-')}`;
-        scrollContainer.style.display = 'flex';
+        
         artistMap[artist].forEach(track => {
             const songCard = document.createElement('div');
-            songCard.className = 'song-card';
-            songCard.style.marginRight = '30px';
-            songCard.style.width = '100px';
+            songCard.className = 'song-card-small';
             songCard.innerHTML = `
-                <img src="${track.cover}" alt="Album Cover" class="album-cover" onclick="playTrack('${track.url}')">
+                <img src="${track.cover}" alt="Cover" class="album-cover-artist" onclick="playTrack('${track.url}')">
                 <div class="song-info">
                     <p>${track.title}</p>
                 </div>
             `;
             scrollContainer.appendChild(songCard);
         });
+
+        artistSection.appendChild(artistTitle);
         artistSection.appendChild(scrollContainer);
         artistList.appendChild(artistSection);
     }
 }
-
-function switchToAlbumPage(albumName, tracks) {
-    // 1. Find the current active page and the album page
-    const currentPage = document.querySelector('.page-content.active');
+function switchToArtistPage(artistName, tracks) {
     const nextPage = document.getElementById('albumPage');
-
     if (!nextPage) return;
 
-    // 2. Populate the Album Page content
-    const firstTrack = tracks[0];
+    const firstTrack = tracks[0] || { cover: '', album: '' };
+    
     nextPage.innerHTML = `
         <header class="content-header">
-            <button class="back-button" onclick="goBackToLibrary()" style="margin-bottom: 20px;">Back</button>
-            <div style="display: flex; gap: 30px; align-items: end;">
-                <img src="${firstTrack.cover}" class="album-cover" style="width: 250px; height: 250px;">
-                <div>
-                    <p4 style="font-size: 48px;">${albumName}</p4>
-                    <p style="color: #c943ac; font-size: 24px;">${firstTrack.artist}</p>
+            <button class="back-button" onclick="goBackToLibrary()">Back</button>
+            <div class="album-header">
+                <img src="${firstTrack.cover}" class="album-page-cover" alt="${artistName}">
+                <div class="artist-header-info">
+                    <p class="artist-label">Artist</p>
+                    <h4>${artistName}</h4>
+                    <span class="track-count">${tracks.length} Tracks</span>
                 </div>
             </div>
         </header>
-        <div class="track-list" style="margin-top: 40px;">
+        <div class="track-list-container">
             ${tracks.map((track, index) => `
-                <div class="artist-list li" onclick="playTrack('${track.url}')" style="cursor: pointer;">
-                    <span>${index + 1}</span>
-                    <div style="flex: 1;"><strong>${track.title}</strong></div>
+                <div class="track-item" onclick="playTrack('${track.url}')">
+                    <span class="track-number">${index + 1}</span>
+                    <div class="track-details">
+                        <strong>${track.title}</strong>
+                        <p class="track-subtext">${track.album}</p>
+                    </div>
                 </div>
             `).join('')}
         </div>
     `;
 
-    // 3. Execute your "Curved" animation logic
+    triggerPageTransition(nextPage);
+}
+
+function switchToAlbumPage(albumName, tracks) {
+    const nextPage = document.getElementById('albumPage');
+    if (!nextPage) return;
+
+    const firstTrack = tracks[0];
+    nextPage.innerHTML = `
+        <header class="content-header">
+            <button class="back-button" onclick="goBackToLibrary()">Back</button>
+            <div class="album-header">
+                <img src="${firstTrack.cover}" class="album-page-cover" alt="${albumName}">
+                <div class="artist-header-info">
+                    <p class="artist-label">${firstTrack.artist}</p>
+                    <h4>${albumName}</h4>
+                </div>
+            </div>
+        </header>
+        <div class="track-list-container">
+            ${tracks.map((track, index) => `
+                <div class="track-item" onclick="playTrack('${track.url}')">
+                    <span class="track-number">${index + 1}</span>
+                    <div class="track-details">
+                        <strong>${track.title}</strong>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    triggerPageTransition(nextPage);
+}
+
+// Reusable transition logic to keep functions clean
+function triggerPageTransition(nextPage) {
+    const currentPage = document.querySelector('.page-content.active');
+    
     if (currentPage && currentPage !== nextPage) {
         currentPage.classList.remove('active');
         currentPage.classList.add('exit');
         setTimeout(() => currentPage.classList.remove('exit'), 100);
     }
 
-
-    nextPage.style.display = 'block'; // Force it to exist in the layout
-    setTimeout(() => {
-        nextPage.classList.add('active');
-    }, 50);
+    nextPage.style.display = 'block';
+    setTimeout(() => nextPage.classList.add('active'), 50);
 }
 
+
+
+
 function goBackToLibrary() {
-    const libraryItem = document.querySelector('[data-page="library"]');
-    if (libraryItem) activateItem(libraryItem); 
+    const targetItem = document.querySelector(`[data-page="${lastVisitedPageId}"]`);
+    if (targetItem) {
+        activateItem(targetItem);
+    } else {
+        const libraryItem = document.querySelector('[data-page="library"]');
+        if (libraryItem) activateItem(libraryItem);
+    }
 }
 
 /**
  * 4. THE PLAYER
  */
+let currentSong = null;
 function playTrack(url) {
-    // Basic global audio player logic
-    const audio = new Audio(url);
-    audio.play();
+    // If something is already playing, stop it first
+    if (currentSong) {
+        currentSong.pause();
+        currentSong.src = '';
+    }
+
+    
+    currentSong = new Audio(url);
+    currentVolume = document.querySelector('.volume-slider')?.value || 80;
+    currentSong.volume = currentVolume / 100;
+    currentSong.play();
+
+    currentSong.play().catch(error => {console.error('Playback failed:', error);});
+}
+
+function playTrack(url) {
+    stopMusic();
+
+    currentSong = new Audio(url);
+
+    // Grab the current slider position and apply log math
+    const slider = document.querySelector('.volume-slider');
+    if (slider) {
+        const sliderVal = parseFloat(slider.value);
+        currentSong.volume = (Math.pow(10, sliderVal / 100) - 1) / 9;
+    }
+
+    currentSong.play().catch(err => console.error("Playback blocked:", err));
 }
 
 function stopMusic() {
-    // This will stop all currently playing audio elements
-    const audios = document.querySelectorAll('audio');
-    audios.forEach(audio => {
-        audio.pause();
-        audio.currentTime = 0;
-    });
+    if (currentSong) {
+        currentSong.pause();
+        currentSong.src = '';
+        currentSong = null;
+    }
 }
-    
+
+window.addEventListener('load', () => {
+    const volumeSlider = document.querySelector('.volume-slider');
+    const volumeLabel = document.querySelector('.volume-label');
+
+    if (volumeSlider) {
+        volumeSlider.addEventListener('input', (e) => {
+            const sliderVal = parseFloat(e.target.value);
+            
+            // Logarithmic mapping: (10^(x/100) - 1) / (10 - 1)
+            // This creates a smooth curve from 0.0 to 1.0
+            const logVolume = (Math.pow(10, sliderVal / 100) - 1) / 9;
+            
+            if (currentSong) {
+                currentSong.volume = logVolume;
+            }
+            
+            if (volumeLabel) {
+                volumeLabel.textContent = Math.round(sliderVal) + '%';
+            }
+            
+            console.log(`Slider: ${sliderVal} | Perceived Volume: ${logVolume.toFixed(2)}`);
+        });
+    }
+});
 
 
 
 // Call the auto-loader when the script runs
-//loadExistingMusic();
+loadExistingMusic();
+
+
+
+
+
 
 /*
 // Icon path constants
@@ -390,15 +482,4 @@ function playMusic(button) {
         }
     }
 }
-
-const volumeSlider = document.querySelector('.volume-slider');
-const volumeLabel = document.querySelector('.volume-label');
-
-volumeSlider.addEventListener('input', (e) => {
-    let volume = e.target.value;
-    if (song) {
-        song.volume = volume / 100;  // Convert 0-100 to 0-1
-    }
-    volumeLabel.textContent = volume + '%';
-});
 */
