@@ -132,14 +132,6 @@ window.addEventListener('load', () => {
     }
 });
 
-function pause(button) {
-    const playIcon = button.querySelector('.play-icon');
-    if (playIcon.src.includes('play-icon.png')) {
-        playIcon.src = '/images/pause-icon.png';
-    } else {
-        playIcon.src = '/images/play-icon.png';
-    }
-}
 
 /**
  * 1. THE AUTO-LOADER
@@ -217,7 +209,7 @@ function displayMusic(tracks) {
     tracks.forEach(track => {
         if (!artistMap[track.artist]) artistMap[track.artist] = [];
         artistMap[track.artist].push(track);
-        
+
         if (!albumMap[track.album]) albumMap[track.album] = [];
         albumMap[track.album].push(track);
     });
@@ -253,7 +245,7 @@ function displayMusic(tracks) {
 
         const scrollContainer = document.createElement('div');
         scrollContainer.className = `artist-scroll ${artist.replace(/\s+/g, '-')}`;
-        
+
         artistMap[artist].forEach(track => {
             const songCard = document.createElement('div');
             songCard.className = 'song-card-small';
@@ -276,31 +268,40 @@ function switchToArtistPage(artistName, tracks) {
     if (!nextPage) return;
 
     const firstTrack = tracks[0] || { cover: '', album: '' };
-    
+
     nextPage.innerHTML = `
         <header class="content-header">
-            <button class="back-button" onclick="goBackToLibrary()">Back</button>
+            <button class="back-button" onclick="goBackTopage()">Back</button>
             <div class="album-header">
                 <img src="${firstTrack.cover}" class="album-page-cover" alt="${artistName}">
                 <div class="artist-header-info">
-                    <p class="artist-label">Artist</p>
                     <h4>${artistName}</h4>
                     <span class="track-count">${tracks.length} Tracks</span>
                 </div>
             </div>
         </header>
         <div class="track-list-container">
-            ${tracks.map((track, index) => `
-                <div class="track-item" onclick="playTrack('${track.url}')">
+    ${tracks.map((track, index) => {
+        const trackData = JSON.stringify(track).replace(/"/g, '&quot;');
+        const listData = JSON.stringify(tracks).replace(/"/g, '&quot;');
+
+        return `
+            <div class="track-item">
+                <div class="track-clickable-area" onclick="playTrack('${track.url}', ${listData})">
                     <span class="track-number">${index + 1}</span>
                     <div class="track-details">
                         <strong>${track.title}</strong>
-                        <p class="track-subtext">${track.album}</p>
+                        <p class="track-subtext">${track.album || ''}</p>
                     </div>
                 </div>
-            `).join('')}
-        </div>
-    `;
+                <button class="add-to-queue-btn" onclick="addToQueue(${trackData})">
+                    +
+                </button>
+            </div>
+        `;
+    }).join('')}
+</div>
+`;
 
     triggerPageTransition(nextPage);
 }
@@ -312,7 +313,7 @@ function switchToAlbumPage(albumName, tracks) {
     const firstTrack = tracks[0];
     nextPage.innerHTML = `
         <header class="content-header">
-            <button class="back-button" onclick="goBackToLibrary()">Back</button>
+            <button class="back-button" onclick="goBackTopage()">Back</button>
             <div class="album-header">
                 <img src="${firstTrack.cover}" class="album-page-cover" alt="${albumName}">
                 <div class="artist-header-info">
@@ -322,16 +323,26 @@ function switchToAlbumPage(albumName, tracks) {
             </div>
         </header>
         <div class="track-list-container">
-            ${tracks.map((track, index) => `
-                <div class="track-item" onclick="playTrack('${track.url}')">
+ ${tracks.map((track, index) => {
+        const trackData = JSON.stringify(track).replace(/"/g, '&quot;');
+        const listData = JSON.stringify(tracks).replace(/"/g, '&quot;');
+
+        return `
+            <div class="track-item">
+                <div class="track-clickable-area" onclick="playTrack('${track.url}', ${listData})">
                     <span class="track-number">${index + 1}</span>
                     <div class="track-details">
                         <strong>${track.title}</strong>
                     </div>
                 </div>
-            `).join('')}
-        </div>
-    `;
+                <button class="add-to-queue-btn" onclick="addToQueue(${trackData})">
+                    +
+                </button>
+            </div>
+        `;
+    }).join('')}
+</div>
+`;
 
     triggerPageTransition(nextPage);
 }
@@ -339,7 +350,7 @@ function switchToAlbumPage(albumName, tracks) {
 // Reusable transition logic to keep functions clean
 function triggerPageTransition(nextPage) {
     const currentPage = document.querySelector('.page-content.active');
-    
+
     if (currentPage && currentPage !== nextPage) {
         currentPage.classList.remove('active');
         currentPage.classList.add('exit');
@@ -353,7 +364,7 @@ function triggerPageTransition(nextPage) {
 
 
 
-function goBackToLibrary() {
+function goBackTopage() {
     const targetItem = document.querySelector(`[data-page="${lastVisitedPageId}"]`);
     if (targetItem) {
         activateItem(targetItem);
@@ -366,23 +377,77 @@ function goBackToLibrary() {
 /**
  * 4. THE PLAYER
  */
+
+
+// Global State
+let userQueue = [];
+let contextQueue = [];
+let currentTrackIndex = -1;
 let currentSong = null;
-function playTrack(url) {
-    // If something is already playing, stop it first
+
+function playTrack(url, allTracksInContext = []) {
+    stopMusic();
+
+    // 1. Update the Auto-Queue Context
+    // If tracks are provided, we save them so the player knows what's next
+    if (allTracksInContext.length > 0) {
+        contextQueue = allTracksInContext;
+        currentTrackIndex = contextQueue.findIndex(t => t.url === url);
+    }
+
+    currentSong = new Audio(url);
+
+    // 2. Apply your existing Volume Math
+    const slider = document.querySelector('.volume-slider');
+    if (slider) {
+        const sliderVal = parseFloat(slider.value);
+        currentSong.volume = (Math.pow(10, sliderVal / 100) - 1) / 9;
+    }
+
+    // 3. Next song Trigger
+    currentSong.onended = () => {
+        playNext();
+    };
+
+    currentSong.play().catch(err => console.error("Playback blocked:", err));
+}
+
+function playNext() {
+    if (userQueue.length > 0) {
+        // Priority 1: Manual Queue (Takes from the top)
+        const nextTrack = userQueue.shift();
+        playTrack(nextTrack.url);
+    } else if (currentTrackIndex !== -1 && currentTrackIndex < contextQueue.length - 1) {
+        // Priority 2: Auto-Queue (Next song in album/artist list)
+        currentTrackIndex++;
+        const nextTrack = contextQueue[currentTrackIndex];
+        playTrack(nextTrack.url);
+    } else {
+        console.log("Queue finished.");
+        stopMusic();
+    }
+}
+
+function addToQueue(track) {
+    // Adds to the very top as requested
+    userQueue.unshift(track);
+    console.log(`Added ${track.title} to top of queue`);
+}
+
+function stopMusic() {
     if (currentSong) {
         currentSong.pause();
         currentSong.src = '';
+        currentSong.onended = null; // Prevent playNext() from firing
+        currentSong = null;
     }
 
-    
-    currentSong = new Audio(url);
-    currentVolume = document.querySelector('.volume-slider')?.value || 80;
-    currentSong.volume = currentVolume / 100;
-    currentSong.play();
-
-    currentSong.play().catch(error => {console.error('Playback failed:', error);});
+    // Reset context so "Play Next" doesn't have a reference point
+    contextQueue = [];
+    currentTrackIndex = -1;
 }
 
+/*
 function playTrack(url) {
     stopMusic();
 
@@ -405,6 +470,7 @@ function stopMusic() {
         currentSong = null;
     }
 }
+*/
 
 window.addEventListener('load', () => {
     const volumeSlider = document.querySelector('.volume-slider');
@@ -413,19 +479,19 @@ window.addEventListener('load', () => {
     if (volumeSlider) {
         volumeSlider.addEventListener('input', (e) => {
             const sliderVal = parseFloat(e.target.value);
-            
+
             // Logarithmic mapping: (10^(x/100) - 1) / (10 - 1)
             // This creates a smooth curve from 0.0 to 1.0
             const logVolume = (Math.pow(10, sliderVal / 100) - 1) / 9;
-            
+
             if (currentSong) {
                 currentSong.volume = logVolume;
             }
-            
+
             if (volumeLabel) {
                 volumeLabel.textContent = Math.round(sliderVal) + '%';
             }
-            
+
             console.log(`Slider: ${sliderVal} | Perceived Volume: ${logVolume.toFixed(2)}`);
         });
     }

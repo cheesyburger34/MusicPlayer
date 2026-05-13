@@ -151,6 +151,14 @@ body {
     background: var(--button-hover-pink);
 }
 
+.now-playing {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    color: var(--text-muted);
+}
+
 /* Content Area */
 .album-header {
     display: flex;
@@ -444,22 +452,33 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* New UI Layout Classes */
 .album-header {
-    display: flex;
-    flex-wrap: wrap;
+    grid-template-columns: repeat(2, 1fr); 
+    display: grid;
     gap: 30px;
     align-items: flex-end;
 }
 
+
+.artist-header-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+    
+}
+
 .artist-header-info h4 {
-    font-size: 48px;
+    font-size: 34px;
     color: var(--primary-magenta);
     font-weight: 900;
     font-family: 'Courier New', Courier, monospace;
+    display: block;
 }
 
-.artist-label {
-    color: var(--primary-magenta);
-    font-size: 24px;
+@media (max-width: 900px) {
+    .album-header {
+        grid-template-columns: 1fr;
+    }
 }
 
 .track-count {
@@ -470,7 +489,8 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .album-page-cover {
-    width: 250px;
+    max-width: 250px;
+    width: 100%;
     height: 250px;
     object-fit: cover;
     border-radius: 8px;
@@ -511,6 +531,13 @@ input[type="range"]::-webkit-slider-thumb {
 
 .track-item:hover {
     background: var(--primary-magenta-glow);
+}
+
+.track-clickable-area {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-grow: 1;
 }
 
 /*https://dev.to/shubhamtiwari909/media-query-with-css-grid-1l7a*/

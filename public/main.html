@@ -28,9 +28,18 @@
 
     <nav class="btm-player">
         <div class="player-controls">
-           <button class="stop-btn" onclick="stopMusic(); console.log('button clicked')">Stop Music</button>
-            <button class="next-btn">Next</button>
+            <button class="next-btn" onclick="playNext()">
+                <span>▶▶</span>
+            </button>
             <button class="add-btn" onclick="addMusic()">+</button>
+                <button class="stop-btn" onclick="stopMusic(true)">
+                    <span>■</span>
+                </button>
+
+                <div id="now-playing-info" class="now-playing">
+                    <strong id="track-title">No Song Playing</strong>
+                    <p id="artist-name" class="track-subtext"></p>
+                </div>
             <div class="volume-control">
                 <input type="range" class="volume-slider" min="0" max="100" value="80">
                 <span class="volume-label">80%</span>
@@ -38,7 +47,7 @@
         </div>
     </nav>
 
- <div class="content">
+    <div class="content">
         <div id="library" class="page-content active">
             <header class="content-header">
                 <h2>Library</h2>
@@ -80,11 +89,11 @@
                 <p>View an open album here</p>
             </header>
 
-            </div>
         </div>
+    </div>
     </div>
 
     <script src="main.js" async></script>
 </body>
-</html>
 
+</html>
