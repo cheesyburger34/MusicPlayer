@@ -1,74 +1,99 @@
-/* Reset default browser margins and padding, ensure border/padding stay within element width */
+:root {
+    /*Primary Colors */
+    --primary-magenta: #c943ac;
+    --primary-magenta-glow: rgba(201, 67, 172, 0.25);
+    --primary-magenta-hover: #a0328ca7;
+    --accent-pink: #ff10cb;
+    --accent-purple: #95129e;
+    --accent-purple-dark: #660c6d;
+    --accent-purple-border: #971591;
+    --deep-purple: rgba(64, 0, 94, 1);
+    --deep-purple-transparent: rgba(64, 0, 94, 0.2);
+
+    /* Backgrounds & Gradients */
+    --bg-gradient-start: #450f5a;
+    --bg-gradient-end: #5e0d5a;
+    --bg-sidebar: rgba(20, 20, 30, 0.95);
+    --bg-player: rgba(20, 20, 30, 1);
+    --bg-track: #77075b;
+    --bg-track-light: #ddd;
+
+    /* Glassmorphism & Transparencies */
+    --glass-light: rgba(255, 255, 255, 0.03);
+    --glass-medium: rgba(255, 255, 255, 0.05);
+    --glass-heavy: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-border-bright: rgba(255, 255, 255, 0.3);
+    --glass-hover: rgba(255, 255, 255, 0.08);
+    --button-hover-pink: rgba(243, 152, 228, 0.4);
+    --nav-overlay: rgba(0, 0, 0, 0.3);
+    --shadow-dark: rgba(0, 0, 0, 0.4);
+
+    /* Typography */
+    --text-main: #ffffff;
+    --text-muted: rgba(255, 255, 255, 0.7);
+}
+
+/* Reset default browser margins and padding */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* Base body styles: Set font and a dark purple diagonal gradient background */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #450f5a 0%, #5e0d5a 100%);
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
     min-height: 100vh;
     display: flex;
-    /* Aligns sidebar and main content side-by-side */
 }
 
 /* Sidebar styling */
 .left-nav {
     width: 20%;
-    background: rgba(20, 20, 30, 0.95);
+    background: var(--bg-sidebar);
     backdrop-filter: blur(10px);
-    /* Frosted glass effect */
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: 1px solid var(--glass-border);
     display: flex;
     flex-direction: column;
     padding: 5% 0;
-    box-shadow: 6px 8px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: 6px 8px 32px var(--shadow-dark);
     padding-top: 100px;
 }
 
-
-/* Container for the navigation links */
 .nav-items {
     display: flex;
     flex-direction: column;
     padding: 0 10px;
 }
 
-/* Individual navigation link styles */
 .nav-item {
     position: relative;
     margin-top: -100px;
     padding: 5% 8%;
     min-height: 80%;
-    color: rgba(255, 255, 255, 0.7);
-    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-muted);
+    background: var(--nav-overlay);
     text-decoration: none;
     font-size: 16px;
     font-weight: 500;
     cursor: pointer;
     border-radius: 2%;
     transition: all 0.3s ease;
-    /* Smooth hover effects */
     display: flex;
     align-items: flex-start;
     overflow: hidden;
-
 }
 
-/* Lighten background when hovering over an item */
 .nav-item:hover {
-    background: rgba(64, 0, 94, 0.2);
+    background: var(--deep-purple-transparent);
 }
 
-/* Styling for the currently selected navigation item */
 .nav-item.active {
-    background: rgba(64, 0, 94);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: var(--deep-purple);
+    border: 1px solid var(--glass-border-bright);
     align-items: flex-start;
 }
-
 
 .nav-item.above-active {
     align-items: flex-start;
@@ -78,103 +103,138 @@ body {
     align-items: flex-end;
 }
 
-
-
-/* Styling for icons inside the nav items */
 .nav-icon {
     font-size: 20px;
     min-width: 20px;
 }
 
-
+/* Bottom Player */
 .btm-player {
     position: fixed;
     bottom: 0;
     right: 0;
     width: 80%;
     height: 10vh;
-    background: rgba(20, 20, 30, 1);
+    background: var(--bg-player);
     backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--glass-border);
     display: flex;
     justify-content: center;
     padding: 2%;
-    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 -4px 30px var(--shadow-dark);
 }
 
 .player-controls {
     display: flex;
-    padding-left: 10%;
-    padding-right: 10%;
-    padding-top: 0%;
-    gap: 20%;
+    padding: 0 2%;
+    gap: 10px;
     width: 100%;
     justify-content: space-between;
 }
 
-.play-btn {
+.stop-btn, .next-btn, .add-btn {
+    min-width: 5px;
     padding: 2% 30px;
     font-size: 16px;
     display: flex;
     justify-content: center;
-    text-decoration: black;
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    background: var(--glass-heavy);
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: background 0.3s ease, transform 0.3s ease;
+    align-items: center;
 }
 
-.play-btn:hover {
+.stop-btn:hover, .next-btn:hover, .add-btn:hover {
     transform: translateY(-5px);
-    background: rgba(243, 152, 228, 0.4);
+    background: var(--button-hover-pink);
 }
 
-.next-btn {
-    padding: 2% 30px;
-    ;
-    font-size: 16px;
+.top-nav{
+    position: fixed;
+    top: 0;
+    left: 20%;
+    width: 80%;
+    height: 8vh;
+    z-index: 1;
+    background: var(--bg-player);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--glass-border);
     display: flex;
+    align-items: center;
     justify-content: center;
-    text-decoration: black;
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease;
+    padding: 0 2%;
+    box-shadow: 0 -4px 30px var(--shadow-dark);
 }
 
-.next-btn:hover {
-    transform: translateY(-5px);
-    background: rgba(243, 152, 228, 0.4);
+.search-bar {
+  display: flex;
+  align-items: center;
+  border: 2px solid #c943ac;
+  border-radius: 25px;
+  padding: 5px 15px;
+  width: 100%;
+
 }
 
-.add-btn {
-    padding: 2% 30px;
-    ;
-    font-size: 16px;
+.search-bar input[type="search"] {
+  border: none;
+  outline: none;
+  flex-grow: 1;
+  padding: 5px;
+  font-size: 16px;
+  background: transparent;
+  color: #ddd;
+}
+
+.search-preview {
+    position: fixed;
+    top: 8vh;
+    width: 80%;
+    background: var(--glass-light);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 100px;
+    padding: 15px;
+    box-shadow: 0 4px 20px var(--shadow-dark);
+    z-index: 2;
+    align-items: center;
+
+    margin-top: -500px;
+
+    display: block;
+    animation: swingDown 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes swingDown {
+    0% {
+        opacity: 0;
+        transform: rotate(-45deg) translateY(-50px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: rotate(0deg) translateY(500px);
+    }
+}
+
+::webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20" stroke="%23c943ac" stroke-width="2"/><line x1="20" y1="4" x2="4" y2="20" stroke="%23c943ac" stroke-width="2"/></svg>') no-repeat center;
+  cursor: pointer;
+}
+
+/* Content Area */
+.album-header {
     display: flex;
-    justify-content: center;
-    text-decoration: black;
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-}
-
-.add-btn:hover {
-    transform: translateY(-5px);
-    background: rgba(243, 152, 228, 0.4);
-}
-
-.content-header {
-    margin-bottom: 10%;
-    width: 100%;
-    text-align: left;
+    flex-wrap: wrap;
+    gap: 30px;
+    align-items: center; 
 }
 
 .grid-container {
@@ -185,12 +245,15 @@ body {
 }
 
 .music-card {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 30px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
+    padding: 15px;
+    background: var(--glass-light);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+    transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .music-card img {
@@ -202,7 +265,7 @@ body {
 
 .music-card:hover {
     transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--glass-hover);
 }
 
 /* Artist List Styling */
@@ -213,18 +276,25 @@ body {
 
 .artist-list li {
     padding: 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--glass-border);
     display: flex;
     gap: 20px;
+    align-items: center;
+    font-family: sans-serif;
+    color: var(--primary-magenta);
+    font-weight: bold;
+    font-size: 24px;
 }
 
 .artist-list li span {
-    color: #c943ac;
-    font-weight: bold;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--primary-magenta);
+    font-weight: 900;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 24px;
+    margin-right: 10px;
 }
 
-/* Horizontal Scroll Container for Artist's Songs */
+/* Scroll Containers */
 .artist-scroll {
     display: flex;
     flex-direction: row;
@@ -234,26 +304,24 @@ body {
     gap: 15px;
 }
 
-/* Horizontal Scrollbar Styling */
 .artist-scroll::-webkit-scrollbar {
     height: 8px;
 }
 
 .artist-scroll::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--glass-medium);
     border-radius: 10px;
 }
 
 .artist-scroll::-webkit-scrollbar-thumb {
-    background: #95129e;
+    background: var(--accent-purple);
     border-radius: 10px;
 }
 
-/* 1. Setup the 3D Stage */
+/* 3D Stage */
 .content {
     flex: 1;
     perspective: 2000px;
-    /* Increased perspective for a dramatic curve */
     position: relative;
     padding: 60px;
     overflow-y: auto;
@@ -261,21 +329,20 @@ body {
     height: 90vh;
 }
 
-/* 2. The Curved Paper Slide */
 .page-content {
     display: none;
     position: absolute;
     width: 85%;
     left: 7.5%;
     opacity: 0;
-    /* Pivot point is way off-screen to the right to create the curve */
     transform-origin: 200% 50%;
     backface-visibility: hidden;
-    background: rgba(255, 255, 255, 0.03);
-    padding: 40px;
+    background: var(--glass-light);
+    padding: 30px;
     border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: -20px 20px 50px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    box-shadow: -20px 20px 50px var(--shadow-dark);
+    margin-top: 40px;
 }
 
 .page-content.active {
@@ -283,57 +350,26 @@ body {
     animation: curvedSlideIn 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-.page-content.exit {
-    display: block;
-    animation: curvedSlideOut 0.8s cubic-bezier(0.5, 0, 0.75, 0) forwards;
-}
-
-/* Coming in from the right with a curve */
 @keyframes curvedSlideIn {
     0% {
         opacity: 0;
-        transform: rotateY(-90deg) translateX(100%) scale(0.5);
+        transform: rotateX(-90deg) translateY(100%) scale(0.5);
     }
 
     100% {
         opacity: 1;
-        transform: rotateY(0deg) translateX(0) scale(1);
+        transform: rotateX(0deg) translateY(0) scale(1);
     }
 }
 
-/* Styling the image circle */
 .artist-img {
     width: 60px;
     height: 60px;
     object-fit: cover;
     border-radius: 50%;
-    border: 2px solid #971591;
+    border: 2px solid var(--accent-purple-border);
     vertical-align: middle;
-    /* Aligns image with the text */
     margin-right: 15px;
-    /* Adds space before the name */
-}
-
-/* Styling the rank number (the span) */
-li span {
-    font-size: 24px;
-    color: #c943ac;
-    font-weight: 900;
-    font-family: 'Courier New', Courier, monospace;
-    margin-right: 10px;
-    /* Space between number and name */
-}
-
-li {
-    list-style: none;
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    font-family: sans-serif;
-    /* Cleaner font for the artist name */
-    color: #c943ac;
-    font-weight: bold;
-    font-size: 24px;
 }
 
 .album-cover {
@@ -344,30 +380,33 @@ li {
     margin-top: 10px;
 }
 
+.album-cover-small {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 10px 20px var(--shadow-dark);
+    margin-bottom: 12px;
+}
+
 .play-button {
     width: 2.5vh;
     height: 2.5vh;
-    background: #c943ac;
+    background: var(--primary-magenta);
     border: none;
-    border-radius: 5px;
     cursor: pointer;
     transition: background 0.3s ease;
     border-radius: 50%;
-    box-shadow: 0 4px 15px rgba(201, 67, 172, 0.25);
+    box-shadow: 0 4px 15px var(--primary-magenta-glow);
 }
 
 .play-button:hover {
-    background: #a0328ca7;
-}
-
-.play-icon {
-    width: 2.5vh;
-    height: 2.5vh;
+    background: var(--primary-magenta-hover);
 }
 
 p3 {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--text-muted);
     font-weight: 100;
     font-family: 'courier new', courier, monospace;
     margin-top: 4px;
@@ -375,80 +414,222 @@ p3 {
 
 p4 {
     font-size: 24px;
-    color: #c943ac;
-    font-weight: bold;
+    color: var(--primary-magenta);
     font-weight: 900;
     font-family: 'courier new', courier, monospace;
 }
 
 .song-info {
     display: flex;
-    align-items: top;
+    align-items: flex-start;
     gap: 10px;
     margin-top: -1px;
 }
 
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
 }
-
 
 ::-webkit-scrollbar-track {
     visibility: hidden;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #95129e;
+    background: var(--accent-purple);
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #660c6d;
+    background: var(--accent-purple-dark);
+}
+
+/* Volume Control */
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .volume-slider {
-    width: 150px;
+    margin-right: 15px;
+    width: 100px;
     cursor: pointer;
+    flex-grow: 1;
 }
 
 .volume-label {
     margin-right: 10px;
-    font-size: 25px;
-    color: rgba(255, 255, 255, 0.7);
+    width: 45px;
+    font-family: 'Courier New', Courier, monospace; 
+    text-align: right; 
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+}
+
+/* Range Input Styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  min-width: 50px;
+}
+
+input[type="range"]:focus {
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  background: var(--bg-track);
+  height: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -4px;
+  background-color: var(--accent-pink);
+  height: 1rem;
+  width: 1rem;
+  border-radius: 50%;
+}
+
+.track-list .artist-list li:hover {
+    background: var(--primary-magenta-glow);
+}
+
+.back-button {
+    padding: 10px 20px;
+    font-size: 16px;
     display: flex;
+    justify-content: center;
+    color: var(--text-main);
+    background: var(--glass-heavy);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-bottom: 15px;
 }
 
-.music-card {
+.back-button:hover {
+    background: var(--button-hover-pink);
+}
+
+/* GUI builder styles */
+
+/* New UI Layout Classes */
+.album-header {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 12px;
-    transition: transform 0.2s ease, background 0.2s ease;
+    flex-wrap: wrap;
+    gap: 30px;
+    align-items: flex-end;
 }
 
-.music-card:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-5px);
+.artist-header-info h4 {
+    font-size: 48px;
+    color: var(--primary-magenta);
+    font-weight: 900;
+    font-family: 'Courier New', Courier, monospace;
 }
 
-.album-cover-small {
-    width: 150px; /* Bigger for an album-centric view */
-    height: 150px;
+.artist-label {
+    color: var(--primary-magenta);
+    font-size: 24px;
+}
+
+.track-count {
+    display: block;
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.album-page-cover {
+    width: 250px;
+    height: 250px;
     object-fit: cover;
     border-radius: 8px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-    margin-bottom: 12px;
 }
 
-.track-list .artist-list.li {
-    transition: background 0.2s ease;
+.album-cover-artist {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
     border-radius: 8px;
-    padding: 10px 20px;
+    box-shadow: 0 10px 20px var(--shadow-dark);
 }
 
-.track-list .artist-list.li:hover {
-    background: rgba(201, 67, 172, 0.1);
+/* Track List Container */
+.track-list-container {
+    margin-top: 40px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); 
+    column-gap: 40px; 
+    row-gap: 15px;   
+}
+
+/* Artist Page Specific Layout */
+.artist-track-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.track-item {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.track-item:hover {
+    background: var(--primary-magenta-glow);
+}
+
+/*https://dev.to/shubhamtiwari909/media-query-with-css-grid-1l7a*/
+/* Mobile responsiveness: switch back to 1 column if the screen is narrow */
+@media (max-width: 900px) {
+    .track-list-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+.track-subtext {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+/* Artist Section Spacing */
+.artist-group {
+    margin-bottom: 40px;
+}
+
+.artist-title-clickable {
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+.song-card-small {
+    margin-right: 30px;
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.content-header {
+    margin-bottom: 40px; /* Reduced from 10% to a fixed, clean gap */
+    width: 100%;
+}
+
+.track-number {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-right: 15px;
 }
