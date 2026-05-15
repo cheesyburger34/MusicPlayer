@@ -217,7 +217,7 @@ function displayMusic(tracks) {
     tracks.forEach(track => {
         if (!artistMap[track.artist]) artistMap[track.artist] = [];
         artistMap[track.artist].push(track);
-        
+
         if (!albumMap[track.album]) albumMap[track.album] = [];
         albumMap[track.album].push(track);
     });
@@ -253,7 +253,7 @@ function displayMusic(tracks) {
 
         const scrollContainer = document.createElement('div');
         scrollContainer.className = `artist-scroll ${artist.replace(/\s+/g, '-')}`;
-        
+
         artistMap[artist].forEach(track => {
             const songCard = document.createElement('div');
             songCard.className = 'song-card-small';
@@ -276,7 +276,7 @@ function switchToArtistPage(artistName, tracks) {
     if (!nextPage) return;
 
     const firstTrack = tracks[0] || { cover: '', album: '' };
-    
+
     nextPage.innerHTML = `
         <header class="content-header">
             <button class="back-button" onclick="goBackToLibrary()">Back</button>
@@ -339,7 +339,7 @@ function switchToAlbumPage(albumName, tracks) {
 // Reusable transition logic to keep functions clean
 function triggerPageTransition(nextPage) {
     const currentPage = document.querySelector('.page-content.active');
-    
+
     if (currentPage && currentPage !== nextPage) {
         currentPage.classList.remove('active');
         currentPage.classList.add('exit');
@@ -374,13 +374,13 @@ function playTrack(url) {
         currentSong.src = '';
     }
 
-    
+
     currentSong = new Audio(url);
     currentVolume = document.querySelector('.volume-slider')?.value || 80;
     currentSong.volume = currentVolume / 100;
     currentSong.play();
 
-    currentSong.play().catch(error => {console.error('Playback failed:', error);});
+    currentSong.play().catch(error => { console.error('Playback failed:', error); });
 }
 
 function playTrack(url) {
@@ -413,33 +413,36 @@ window.addEventListener('load', () => {
     if (volumeSlider) {
         volumeSlider.addEventListener('input', (e) => {
             const sliderVal = parseFloat(e.target.value);
-            
+
             // Logarithmic mapping: (10^(x/100) - 1) / (10 - 1)
             // This creates a smooth curve from 0.0 to 1.0
             const logVolume = (Math.pow(10, sliderVal / 100) - 1) / 9;
-            
+
             if (currentSong) {
                 currentSong.volume = logVolume;
             }
-            
+
             if (volumeLabel) {
                 volumeLabel.textContent = Math.round(sliderVal) + '%';
             }
-            
+
             console.log(`Slider: ${sliderVal} | Perceived Volume: ${logVolume.toFixed(2)}`);
         });
     }
 });
 
+function handleSearchInput() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const searchBar = document.getElementById('searchBar');
+    searchBar.addEventListener('search', (e) => {
+        console.log(`User submitted search: ${searchBar.value}`);
+    });
+}
+
 
 
 // Call the auto-loader when the script runs
 loadExistingMusic();
-
-
-
-
-
 
 /*
 // Icon path constants
