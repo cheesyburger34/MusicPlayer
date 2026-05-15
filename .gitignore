@@ -6,9 +6,9 @@ library.db-journal
 musicLibrary/**/*
 
 # 2. But keep the directory structure and the default cover
-!musicLibrary/
-!musicLibrary/covers/
-!musicLibrary/covers/default-cover.webp
+!musicLibrary/.gitkeep
+!musicLibrary/covers/.gitkeep
+!musicLibrary/covers/default-cover.webp.gitkeep
 
 
 # Logs
