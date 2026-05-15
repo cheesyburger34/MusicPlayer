@@ -34,6 +34,8 @@
     --text-muted: rgba(255, 255, 255, 0.7);
 }
 
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css");
+
 /* Reset default browser margins and padding */
 * {
     margin: 0;
@@ -138,6 +140,7 @@ body {
     font-size: 16px;
     display: flex;
     justify-content: center;
+    align-items: center;
     color: var(--text-main);
     background: var(--glass-heavy);
     border: none;
@@ -151,12 +154,23 @@ body {
     background: var(--button-hover-pink);
 }
 
+.add-btn {
+    font-weight: 1000;
+}
+
 .now-playing {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 5px;
     color: var(--text-muted);
+}
+
+.now-playing p {
+    color: var(--text-main);
+    font-size: 14px;
+    font-weight: 100;
+    font-family: 'courier new', courier, monospace;
 }
 
 /* Content Area */
@@ -282,11 +296,11 @@ body {
 @keyframes curvedSlideIn {
     0% {
         opacity: 0;
-        transform: rotateY(-90deg) translateX(100%) scale(0.5);
+        transform: rotateX(-90deg) translateY(100%) scale(0.5);
     }
     100% {
         opacity: 1;
-        transform: rotateY(0deg) translateX(0) scale(1);
+        transform: rotateX(0deg) translateY(0) scale(1);
     }
 }
 
@@ -579,4 +593,19 @@ input[type="range"]::-webkit-slider-thumb {
     font-size: 14px;
     color: var(--text-muted);
     margin-right: 15px;
+}
+
+.add-to-queue-btn {
+    padding: 5px 15px;
+    font-size: 14px;
+    color: var(--text-main);
+    background: var(--glass-heavy);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.add-to-queue-btn:hover {
+    background: var(--button-hover-pink);
 }

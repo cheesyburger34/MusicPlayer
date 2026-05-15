@@ -7,7 +7,7 @@ const navContainer = document.querySelector('.nav-items');
 const stackOffset = 20;
 
 let audioFiles = [];
-let lastVisitedPageId = 'library';
+let lastVisitedPageId = null;
 
 /**
  * Initializes or resets the visual stack layout
@@ -52,7 +52,7 @@ function activateItem(clickedItem) {
 
     const currentPage = document.querySelector('.page-content.active');
     const nextPage = targetPage;
-    if (currentPage && currentPage !== nextPage && currentPage.id !== 'albumPage') {
+    if (currentPage ) {
         lastVisitedPageId = currentPage.id;
     }
 
@@ -142,7 +142,10 @@ async function loadExistingMusic() {
         const response = await fetch('http://localhost:3000/list-music');
         if (response.ok) {
             const data = await response.json();
-            if (data.tracks) displayMusic(data.tracks);
+            if (data.tracks) {
+                audioFiles = data.tracks;
+                displayMusic(data.tracks);
+            } 
         }
     } catch (err) {
         console.error('Could not load library:', err);
@@ -176,11 +179,13 @@ async function addMusic() {
 
             if (data.tracks) {
                 // Auto-fills the page with the songs just uploaded
+                audioFiles = data.tracks;
                 displayMusic(data.tracks);
                 alert('Upload complete!');
             }
         } catch (err) {
             console.error('Upload failed:', err);
+            alert('Upload failed. Please try again.');
         }
     };
 
@@ -389,7 +394,7 @@ function playTrack(url, allTracksInContext = []) {
     stopMusic();
 
     // 1. Update the Auto-Queue Context
-    // If tracks are provided, we save them so the player knows what's next
+    // If tracks are provided save them so the player knows whats next
     if (allTracksInContext.length > 0) {
         contextQueue = allTracksInContext;
         currentTrackIndex = contextQueue.findIndex(t => t.url === url);
@@ -410,6 +415,8 @@ function playTrack(url, allTracksInContext = []) {
     };
 
     currentSong.play().catch(err => console.error("Playback blocked:", err));
+
+    updateSongInfo(currentSong);
 }
 
 function playNext() {
@@ -446,6 +453,39 @@ function stopMusic() {
     contextQueue = [];
     currentTrackIndex = -1;
 }
+
+const updateSongInfo = (currentSong) => {
+    if (!currentSong || !currentSong.src) return;
+
+    const browserSrc = decodeURIComponent(currentSong.src).toLowerCase();
+
+    const track = audioFiles.find(t => {
+        const libraryUrl = t.url.toLowerCase().trim();
+        
+        console.log("Comparing:", browserSrc, "with", libraryUrl);
+        return browserSrc.endsWith(libraryUrl);
+    });
+
+    console.log("Browser Source:", browserSrc);
+    console.log("Found Track Object:", track);
+
+    const trackTitle = document.getElementById('track-title');
+    const artistName = document.getElementById('artist-name');
+
+    if (track) {
+        if (trackTitle) trackTitle.textContent = track.title;
+        if (artistName) artistName.textContent = track.artist;
+    } else {
+        if (trackTitle) trackTitle.textContent = 'Unknown Track';
+        if (artistName) artistName.textContent = 'Unknown Artist';
+    }
+};
+
+console.log(audioFiles.length)
+
+
+
+
 
 /*
 function playTrack(url) {
@@ -505,6 +545,53 @@ loadExistingMusic();
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function showErrorPopup(message) {
+    alert(`Error: ${message}`);
+}
 
 
 /*

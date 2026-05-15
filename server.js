@@ -139,10 +139,6 @@ app.post('/upload', upload.array('songs'), async (req, res) => {
             console.error(`X Error processing ${file.originalname}:`, error);
         }
     }
-
-    // Save the cache after processing all files
-    saveCache(cache);
-    res.json({ message: 'Upload complete', tracks: results });
 });
 
 // Helper for the list endpoint
@@ -156,7 +152,7 @@ function getAllMusicFiles(dir) {
             if (item !== 'covers') { // Skip the covers folder
                 files = files.concat(getAllMusicFiles(fullPath));
             }
-        } else if (/\.(mp3|flac|wav|ogg|m4a|ACC)$/i.test(item)) {
+        } else if (/\.(mp3|flac|wav|ogg|m4a|ACC|AIFF|mp4)$/i.test(item)) {
             files.push(fullPath);
         }
     }
