@@ -24,6 +24,7 @@ const path = require('path');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
 const mm = require('music-metadata');
+const crypto = require('crypto');
 
 const app = express();
 app.use(cors());
@@ -103,8 +104,12 @@ app.post('/upload', upload.array('songs'), async (req, res) => {
             let coverUrl = '/musicLibrary/covers/default-cover.webp';
 
             if (picture) {
-                const imageName = `${path.parse(fileName).name}.jpg`;
+                // Generate a unique filename based on a hash of its file path.
+                // This ensures "Track 1.mp3" in Album A and Album B get completely separate covers.
+                const uniqueHash = crypto.createHash('md5').update(file.originalname).digest('hex').substring(0, 12);
+                const imageName = `${path.parse(fileName).name}_${uniqueHash}.jpg`;
                 const imagePath = path.join(coversDir, imageName);
+                
                 await fsPromises.writeFile(imagePath, picture.data);
                 coverUrl = `/musicLibrary/covers/${imageName}`;
             }
@@ -139,6 +144,7 @@ app.post('/upload', upload.array('songs'), async (req, res) => {
             console.error(`X Error processing ${file.originalname}:`, error);
         }
     }
+    return res.status(200).json({ tracks: results });
 });
 
 // Helper for the list endpoint
@@ -170,53 +176,82 @@ app.get('/list-music', (req, res) => {
 });
 
 async function syncLibrary() {
-    const files = getAllMusicFiles(musicDir);
-    console.log(`Checking ${files.length} files for sync...`);
-
-    for (const fullPath of files) {
-        // 1. Get all tracks currently in the Database
+    console.log("Starting Library Sync...");
+    
+    try {
         const dbTracks = db.prepare('SELECT url FROM tracks').all();
-
+        const deleteStmt = db.prepare('DELETE FROM tracks WHERE url = ?');
+        
         for (const track of dbTracks) {
-            // Convert the URL back to a physical disk path
-            // URL: /musicLibrary/Artist/song.mp3 -> Path: musicLibrary/Artist/song.mp3
             const relativePath = track.url.replace('/musicLibrary/', '');
             const fullPath = path.join(musicDir, relativePath);
 
-            // 2. If the file is missing from the disk, DELETE it from the DB
             if (!fs.existsSync(fullPath)) {
                 console.log(`🗑 Removing missing file from DB: ${relativePath}`);
-                db.prepare('DELETE FROM tracks WHERE url = ?').run(track.url);
+                deleteStmt.run(track.url);
             }
         }
+    } catch (err) {
+        console.error("Error cleaning up orphaned DB entries:", err);
+    }
 
+    const files = getAllMusicFiles(musicDir);
+    console.log(`Checking ${files.length} physical files for sync updates...`);
+
+    const selectStmt = db.prepare('SELECT url FROM tracks WHERE url = ?');
+    const insertStmt = db.prepare(`
+        INSERT INTO tracks (url, title, artist, album, cover)
+        VALUES (?, ?, ?, ?, ?)
+    `);
+
+    for (const fullPath of files) {
         const relPathUrl = `/musicLibrary/${path.relative(musicDir, fullPath).replace(/\\/g, '/')}`;
-
-        // Check if we already have this file in SQLite
-        const existing = db.prepare('SELECT url FROM tracks WHERE url = ?').get(relPathUrl);
+        const existing = selectStmt.get(relPathUrl);
 
         if (!existing) {
-            console.log(`New file found: ${relPathUrl}. Parsing metadata...`);
+            console.log(`New file found via sync: ${relPathUrl}. Parsing metadata...`);
             try {
                 const metadata = await mm.parseFile(fullPath);
-                db.prepare(`
-                    INSERT INTO tracks (url, title, artist, album, cover)
-                    VALUES (?, ?, ?, ?, ?)
-                `).run(
+                
+                // Safe unique naming wrapper for sync covers
+                const picture = metadata.common.picture && metadata.common.picture[0];
+                let syncCoverUrl = '/musicLibrary/covers/default-cover.webp';
+
+                if (picture) {
+                    const uniqueHash = crypto.createHash('md5').update(relPathUrl).digest('hex').substring(0, 12);
+                    const syncCoverName = `${path.parse(fullPath).name}_${uniqueHash}.jpg`;
+                    const imagePath = path.join(coversDir, syncCoverName);
+                    
+                    // Actually write the image payload out to disk
+                    await fsPromises.writeFile(imagePath, picture.data);
+                    syncCoverUrl = `/musicLibrary/covers/${syncCoverName}`;
+                }
+
+                insertStmt.run(
                     relPathUrl,
                     metadata.common.title || path.basename(fullPath),
                     metadata.common.artist || 'Unknown Artist',
                     metadata.common.album || 'Unknown Album',
-                    `/musicLibrary/covers/${path.parse(fullPath).name}.jpg`
+                    syncCoverUrl // <-- FIXED: Passes the correct dynamic variable
                 );
             } catch (e) {
-                console.error(`Failed to parse ${relPathUrl}`);
+                console.error(`Failed to parse sync metadata for ${relPathUrl}`, e);
             }
+        } else {
+            console.log(`File already indexed: ${relPathUrl}`);
         }
     }
     console.log("Library Sync Complete.");
 }
 
-// Run sync every time the server starts
+app.get('/list-music', (req, res) => {
+    try {
+        const tracks = db.prepare('SELECT * FROM tracks').all();
+        res.json({ tracks });
+    } catch (err) {
+        res.status(500).json({ error: "Database error" });
+    }
+});
+
 syncLibrary();
 
