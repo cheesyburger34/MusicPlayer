@@ -461,14 +461,6 @@ function stopMusic() {
     // Reset context so "Play Next" doesn't have a reference point
     contextQueue = [];
     currentTrackIndex = -1;
-
-    // REMOVE IF VOLUME SLIDER IS NOW BROKEN
-    currentSong = new Audio(url);
-    currentVolume = document.querySelector('.volume-slider')?.value || 80;
-    currentSong.volume = currentVolume / 100;
-    currentSong.play();
-
-    currentSong.play().catch(error => { console.error('Playback failed:', error); });
 }
 
 const updateSongInfo = (currentSong) => {
