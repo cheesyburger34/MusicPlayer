@@ -244,14 +244,5 @@ async function syncLibrary() {
     console.log("Library Sync Complete.");
 }
 
-app.get('/list-music', (req, res) => {
-    try {
-        const tracks = db.prepare('SELECT * FROM tracks').all();
-        res.json({ tracks });
-    } catch (err) {
-        res.status(500).json({ error: "Database error" });
-    }
-});
-
 syncLibrary();
 
