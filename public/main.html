@@ -32,14 +32,14 @@
                 <span>▶▶</span>
             </button>
             <button class="add-btn" onclick="addMusic()">🗀</button>
-                <button class="stop-btn" onclick="stopMusic(true)">
-                    <span>■</span>
-                </button>
+            <button class="stop-btn" onclick="stopMusic(true)">
+                <span>■</span>
+            </button>
 
-                <div id="now-playing-info" class="now-playing">
-                    <strong id="track-title">No Song Playing</strong>
-                    <p id="artist-name" class="track-subtext"></p>
-                </div>
+            <div id="now-playing-info" class="now-playing">
+                <strong id="track-title">No Song Playing</strong>
+                <p id="artist-name" class="track-subtext"></p>
+            </div>
             <div class="volume-control">
                 <input type="range" class="volume-slider" min="0" max="100" value="80">
                 <span class="volume-label">80%</span>
@@ -47,14 +47,19 @@
         </div>
     </nav>
 
-    <nav class="top-nav">
+    <nav class="top-nav" id="topNav">
         <div class="search-bar" id="searchBar">
             <input type="search" id="searchInput" placeholder="Search your music..." oninput="handleSearchInput()">
         </div>
+
+        <!-- Dropdown preview panel -->
         <div class="search-preview" id="searchPreview">
             Loading search results...
         </div>
     </nav>
+
+    <!-- Background dimming layer -->
+    <div class="search-overlay" id="searchOverlay"></div>
 
     <div class="content">
         <div id="library" class="page-content active">

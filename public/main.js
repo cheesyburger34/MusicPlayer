@@ -52,7 +52,7 @@ function activateItem(clickedItem) {
 
     const currentPage = document.querySelector('.page-content.active');
     const nextPage = targetPage;
-    if (currentPage ) {
+    if (currentPage) {
         lastVisitedPageId = currentPage.id;
     }
 
@@ -145,7 +145,7 @@ async function loadExistingMusic() {
             if (data.tracks) {
                 audioFiles = data.tracks;
                 displayMusic(data.tracks);
-            } 
+            }
         }
     } catch (err) {
         console.error('Could not load library:', err);
@@ -178,14 +178,23 @@ async function addMusic() {
             const data = await response.json();
 
             if (data.tracks) {
-                // Auto-fills the page with the songs just uploaded
-                audioFiles = data.tracks;
-                displayMusic(data.tracks);
-                alert('Upload complete!');
+                // SPREAD old tracks and combine them cleanly instead of raw overwriting 
+                // to prevent rapid UI rewrites from stomping on each other.
+                if (typeof audioFiles !== 'undefined') {
+                    audioFiles = [...audioFiles, ...data.tracks];
+                    displayMusic(audioFiles); // Re-display the entire updated list
+                } else {
+                    displayMusic(data.tracks);
+                }
+
+                console.log('Upload complete for batch!');
             }
         } catch (err) {
-            console.error('Upload failed:', err);
-            alert('Upload failed. Please try again.');
+            console.error('Upload transaction failed:', err);
+            alert('Upload failed. Please check your network connection or backend logs.');
+        } finally {
+            // Memory cleanup: break references to the hidden DOM node
+            fileInput.remove();
         }
     };
 
@@ -469,7 +478,7 @@ const updateSongInfo = (currentSong) => {
 
     const track = audioFiles.find(t => {
         const libraryUrl = t.url.toLowerCase().trim();
-        
+
         console.log("Comparing:", browserSrc, "with", libraryUrl);
         return browserSrc.endsWith(libraryUrl);
     });
@@ -490,35 +499,6 @@ const updateSongInfo = (currentSong) => {
 };
 
 console.log(audioFiles.length)
-
-
-
-
-
-/*
-function playTrack(url) {
-    stopMusic();
-
-    currentSong = new Audio(url);
-
-    // Grab the current slider position and apply log math
-    const slider = document.querySelector('.volume-slider');
-    if (slider) {
-        const sliderVal = parseFloat(slider.value);
-        currentSong.volume = (Math.pow(10, sliderVal / 100) - 1) / 9;
-    }
-
-    currentSong.play().catch(err => console.error("Playback blocked:", err));
-}
-
-function stopMusic() {
-    if (currentSong) {
-        currentSong.pause();
-        currentSong.src = '';
-        currentSong = null;
-    }
-}
-*/
 
 window.addEventListener('load', () => {
     const volumeSlider = document.querySelector('.volume-slider');
@@ -558,97 +538,32 @@ function handleSearchInput() {
 // Call the auto-loader when the script runs
 loadExistingMusic();
 
+function handleSearchInput() {
+    const searchInput = document.getElementById('searchInput');
+    const topNav = document.getElementById('topNav');
+    const query = searchInput.value.trim();
+
+    if (query.length > 0) {
+        // Show results and dim background if typing 
+        topNav.classList.add('search-active');
+
+        // put the search logic here and update the preview container with results
+        // document.getElementById('searchPreview').innerHTML = "..."; 
+    } else {
+        // Hide elements cleanly if clear
+        topNav.classList.remove('search-active');
+    }
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+document.getElementById('searchOverlay').addEventListener('click', () => {
+    const searchInput = document.getElementById('searchInput');
+    const topNav = document.getElementById('topNav');
+    searchInput.value = ''; // clear input
+    topNav.classList.remove('search-active');
+});
 
 function showErrorPopup(message) {
     alert(`Error: ${message}`);
 }
 
-
-/*
-// Icon path constants
-const PLAY_ICON_PATH = 'images/play-icon.png';
-const PAUSE_ICON_PATH = 'images/pause-icon.png';
-
-let song = new Audio('audio/death-grips-takyon.mp3'); // to change with Ben's system
-
-
-function playMusic(button) {
-
-    // Using data-attribute for better management
-    document.querySelectorAll('.play-btn').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const songId = button.getAttribute('data-song-id'); // in case songId is needed for future expansion, currently not used as we have a single song
-            if (songId) {
-                // play the corresponding audio file
-                if (song) {
-                    song.pause();
-                    song.currentTime = 0;
-                    song.src = ''; // Clean up previous audio source
-                    song = new Audio(`audio/${songId}.mp3`);
-                    song.play().catch(error => {
-                        console.error('Playback failed:', error);
-                    });
-                    song.currentTime = 0;
-                    song.play();
-                }
-            }
-        });
-    });
-    const playIcon = button.querySelector('.play-icon');
-    if (playIcon) {
-        if (playIcon.src.includes('play-icon.png')) {
-            playIcon.src = PAUSE_ICON_PATH;
-            song.play();
-        } else {
-            playIcon.src = PLAY_ICON_PATH;
-            song.pause();
-        }
-    }
-}
-*/
