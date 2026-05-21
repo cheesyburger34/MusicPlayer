@@ -433,17 +433,24 @@ function playNext() {
         // Priority 1: Manual Queue (Takes from the top)
         const nextTrack = userQueue.shift();
         playTrack(nextTrack.url);
+        // fix this ass it can break unsure why 
     } else if (currentTrackIndex !== -1 && currentTrackIndex < contextQueue.length - 1) {
         // Priority 2: Auto-Queue (Next song in album/artist list)
         currentTrackIndex++;
         const nextTrack = contextQueue[currentTrackIndex];
         playTrack(nextTrack.url);
+        //never allow the queue to stop allways find music to pla
     } else {
         console.log("Queue finished.");
         stopMusic();
     }
 }
 
+/*change so that it only goes to the top of the auto quuee not manual ie have 2
+queues one built automaticaly so music doesnt stop playing unless the user stops music
+and another built by the user so that they can add what ever songs they want to listen
+to in order
+*/
 function addToQueue(track) {
     // Adds to the very top as requested
     userQueue.unshift(track);
@@ -490,7 +497,6 @@ const updateSongInfo = (currentSong) => {
     }
 };
 
-console.log(audioFiles.length)
 
 window.addEventListener('load', () => {
     const volumeSlider = document.querySelector('.volume-slider');
@@ -530,24 +536,6 @@ function handleSearchInput() {
 // Call the auto-loader when the script runs
 loadExistingMusic();
 
-function handleSearchInput() {
-    const searchInput = document.getElementById('searchInput');
-    const topNav = document.getElementById('topNav');
-    const query = searchInput.value.trim();
-
-    if (query.length > 0) {
-        // Show results and dim background if typing 
-        topNav.classList.add('search-active');
-
-        // put the search logic here and update the preview container with results
-        // document.getElementById('searchPreview').innerHTML = "..."; 
-    } else {
-        // Hide elements cleanly if clear
-        topNav.classList.remove('search-active');
-    }
-}
-
-
 document.getElementById('searchOverlay').addEventListener('click', () => {
     const searchInput = document.getElementById('searchInput');
     const topNav = document.getElementById('topNav');
@@ -559,3 +547,13 @@ function showErrorPopup(message) {
     alert(`Error: ${message}`);
 }
 
+function openQueuePage() {
+/*
+Allow the user to open and see their queued item followed by the auto
+ queued items and aloow the user to move tiems in any way they like 
+ consider opening the queeu as a right side panel not a main page to aloow t
+ he user to contiue to add new music to the queue and see and edit the queeu
+
+
+*/
+}

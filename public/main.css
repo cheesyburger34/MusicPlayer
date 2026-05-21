@@ -33,6 +33,9 @@
     --text-main: #ffffff;
     --text-muted: rgba(255, 255, 255, 0.7);
 
+    /* Other */
+    --sidebar-width: max(150px, 20%);
+
 
 }
 
@@ -52,7 +55,8 @@ body {
 
 /* Sidebar styling */
 .left-nav {
-    width: 20%;
+    width: var(--sidebar-width);
+    min-width: 150px;
     background: var(--bg-sidebar);
     backdrop-filter: blur(10px);
     border-right: 1px solid var(--glass-border);
@@ -114,8 +118,8 @@ body {
 .btm-player {
     position: fixed;
     bottom: 0;
-    right: 0;
-    width: 80%;
+    left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
     height: 10vh;
     background: var(--bg-player);
     backdrop-filter: blur(10px);
@@ -136,7 +140,8 @@ body {
 
 .stop-btn,
 .next-btn,
-.add-btn {
+.add-btn,
+.view-queue-btn {
     min-width: 5px;
     padding: 2% 30px;
     font-size: 16px;
@@ -154,7 +159,8 @@ body {
 
 .stop-btn:hover,
 .next-btn:hover,
-.add-btn:hover {
+.add-btn:hover,
+.view-queue-btn:hover {
     transform: translateY(-5px);
     background: var(--button-hover-pink);
 }
@@ -182,8 +188,9 @@ body {
 .top-nav {
     position: fixed;
     top: 0;
-    left: 20%;
-    width: 80%;
+    gap: 10%;
+    left: clamp(150px, 20%, 20%);
+    width: calc(100% - clamp(150px, 20%, 20%));
     height: 8vh;
     z-index: 100;
     /* Stays above the overlay */
@@ -227,6 +234,14 @@ body {
     color: var(--text-main);
 }
 
+/* Shrink text in search bar when screen is small so it doesn't extend off screen */
+@media(max-width: 300px) {
+    .search-bar input[type = "search"] {
+        font-size: 14px;
+    }
+}
+
+
 /* Smooth placeholder coloring matching your text-muted styling */
 .search-bar input[type="search"]::placeholder {
     color: var(--text-muted);
@@ -249,7 +264,6 @@ body {
     box-shadow: 0 10px 30px var(--shadow-dark);
     z-index: 99;
     color: var(--text-main);
-
     /* Hidden state by default */
     display: none;
     opacity: 0;

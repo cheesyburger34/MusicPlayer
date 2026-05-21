@@ -28,10 +28,14 @@
 
     <nav class="btm-player">
         <div class="player-controls">
+            <button class="view-queue-btn" onclick="openQueuePage()">
+                <span>=</span>
+            </button>
+
             <button class="next-btn" onclick="playNext()">
                 <span>▶▶</span>
             </button>
-            <button class="add-btn" onclick="addMusic()">🗀</button>
+
             <button class="stop-btn" onclick="stopMusic(true)">
                 <span>■</span>
             </button>
@@ -56,6 +60,8 @@
         <div class="search-preview" id="searchPreview">
             Loading search results...
         </div>
+
+        <button class="add-btn" onclick="addMusic()">🗀</button>
     </nav>
 
     <!-- Background dimming layer -->
