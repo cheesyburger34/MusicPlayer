@@ -47,16 +47,16 @@
         </div>
     </nav>
 
-    <nav class="top-nav" id="topNav">
+    <form class="top-nav" id="topNav">
         <div class="search-bar" id="searchBar">
             <input type="search" id="searchInput" placeholder="Search your music..." oninput="handleSearchInput()">
         </div>
 
         <!-- Dropdown preview panel -->
         <div class="search-preview" id="searchPreview">
-            Loading search results...
+            Loading search results for: <span id="searchQuery"></span>
         </div>
-    </nav>
+    </form>
 
     <!-- Background dimming layer -->
     <div class="search-overlay" id="searchOverlay"></div>

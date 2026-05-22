@@ -517,16 +517,6 @@ window.addEventListener('load', () => {
     }
 });
 
-function handleSearchInput() {
-    const query = document.getElementById('searchInput').value.toLowerCase();
-    const searchBar = document.getElementById('searchBar');
-    searchBar.addEventListener('search', (e) => {
-        console.log(`User submitted search: ${searchBar.value}`);
-    });
-}
-
-
-
 // Call the auto-loader when the script runs
 loadExistingMusic();
 
@@ -534,17 +524,33 @@ function handleSearchInput() {
     const searchInput = document.getElementById('searchInput');
     const topNav = document.getElementById('topNav');
     const query = searchInput.value.trim();
+    const searchQueryDisplay = document.getElementById('searchQuery');
+    let searchResults = [];
 
     if (query.length > 0) {
-        // Show results and dim background if typing 
-        topNav.classList.add('search-active');
+        // Show results and dim background if typing
+        topNav.addEventListener('submit', function (event) {
+            event.preventDefault(); // Stop the page from reloading
+            topNav.classList.add('search-active');
+            searchQueryDisplay.textContent = query;
 
-        // put the search logic here and update the preview container with results
-        // document.getElementById('searchPreview').innerHTML = "..."; 
+            audioFiles.forEach(track => {
+                if (track.title.toLowerCase().match(query.toLowerCase()) ||
+                    track.artist.toLowerCase().match(query.toLowerCase()) ||
+                    track.album.toLowerCase().match(query.toLowerCase())) {
+                    searchResults.push(track);
+                    console.log('Match found:', track);
+                } else {
+                    console.log('No match:', track);
+                }
+            });
+        })
     } else {
         // Hide elements cleanly if clear
         topNav.classList.remove('search-active');
     }
+
+
 }
 
 
