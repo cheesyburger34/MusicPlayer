@@ -527,31 +527,49 @@ function handleSearchInput() {
     const searchQueryDisplay = document.getElementById('searchQuery');
     let searchResults = [];
 
-    if (query.length > 0) {
-        // Show results and dim background if typing
-        topNav.addEventListener('submit', function (event) {
-            event.preventDefault(); // Stop the page from reloading
-            topNav.classList.add('search-active');
-            searchQueryDisplay.textContent = query;
+    // If the search bar is currently focused, prepare to handle search submissions
+    if (document.activeElement === searchInput) {
 
-            audioFiles.forEach(track => {
-                if (track.title.toLowerCase().match(query.toLowerCase()) ||
-                    track.artist.toLowerCase().match(query.toLowerCase()) ||
-                    track.album.toLowerCase().match(query.toLowerCase())) {
-                    searchResults.push(track);
-                    console.log('Match found:', track);
-                } else {
-                    console.log('No match:', track);
-                }
-            });
-        })
+        // Attach a submit listener to the top navigation bar
+        // Prevents page reload and triggers the search logic instead
+        topNav.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            // Only perform a search if the user typed something
+            if (query.length > 0) {
+                topNav.classList.add('search-active'); // Visually activate search mode
+                searchQueryDisplay.textContent = "";   // Clear previous results
+
+                // Loop through all audio tracks and check for matches
+                audioFiles.forEach(track => {
+
+                    // Case-insensitive matching against title, artist, or album
+                    if (track.title.toLowerCase().match(query.toLowerCase()) ||
+                        track.artist.toLowerCase().match(query.toLowerCase()) ||
+                        track.album.toLowerCase().match(query.toLowerCase())) {
+
+                        searchResults.push(track); // Store matched track
+                        console.log('Match found:', track);
+
+                        // Display the result in the search results area
+                        searchQueryDisplay.innerHTML += `${track.artist} - ${track.title}<br>`;
+                    } else {
+                        console.log('No match:', track);
+                    }
+                });
+
+            } else {
+                // If the query is empty, exit search mode
+                topNav.classList.remove('search-active');
+            }
+        });
+
     } else {
-        // Hide elements cleanly if clear
+        // If the search bar is not focused, ensure search mode is disabled
         topNav.classList.remove('search-active');
     }
-
-
 }
+
 
 
 document.getElementById('searchOverlay').addEventListener('click', () => {

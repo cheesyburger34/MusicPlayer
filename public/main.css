@@ -227,7 +227,6 @@ body {
     color: var(--text-main);
 }
 
-/* Smooth placeholder coloring matching your text-muted styling */
 .search-bar input[type="search"]::placeholder {
     color: var(--text-muted);
 }
