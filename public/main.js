@@ -398,27 +398,52 @@ let userQueue = [];
 let contextQueue = [];
 let currentTrackIndex = -1;
 let currentSong = null;
+let currentTrack = null;
+let dragSrcIndex = null;
+
 
 function playTrack(url, allTracksInContext = []) {
     stopMusic();
 
     // 1. Update the Auto-Queue Context
-    // If tracks are provided save them so the player knows whats next
     if (allTracksInContext.length > 0) {
         contextQueue = allTracksInContext;
-        currentTrackIndex = contextQueue.findIndex(t => t.url === url);
     }
 
+    // 2. Resolve Track Metadata across all sources cleanly
+    let trackMetadata = null;
+    if (contextQueue && contextQueue.length > 0) {
+        trackMetadata = contextQueue.find(t => t.url === url);
+    }
+    if (!trackMetadata && userQueue && userQueue.length > 0) {
+        trackMetadata = userQueue.find(t => t.url === url);
+    }
+    if (!trackMetadata && typeof audioFiles !== 'undefined') {
+        trackMetadata = audioFiles.find(t => t.url === url);
+    }
+
+    // Assign metadata securely to keep the UI from displaying "Unknown Track"
+    currentTrack = trackMetadata || { url: url, title: "Unknown Track", name: "Unknown Track" };
+
+    // 3. Track Index Management
+    if (contextQueue && contextQueue.length > 0) {
+        const index = contextQueue.findIndex(track => track.url === url);
+        if (index !== -1) {
+            currentTrackIndex = index;
+        }
+    }
+
+    // 4. Initialize Audio Engine
     currentSong = new Audio(url);
 
-    // 2. Apply your existing Volume Math
+    // Volume Calculations
     const slider = document.querySelector('.volume-slider');
     if (slider) {
         const sliderVal = parseFloat(slider.value);
         currentSong.volume = (Math.pow(10, sliderVal / 100) - 1) / 9;
     }
 
-    // 3. Next song Trigger
+    // Next Track Binding
     currentSong.onended = () => {
         playNext();
     };
@@ -426,48 +451,61 @@ function playTrack(url, allTracksInContext = []) {
     currentSong.play().catch(err => console.error("Playback blocked:", err));
 
     updateSongInfo(currentSong);
+
+    // Refresh UI
+    if (document.getElementById('queuePanel')?.classList.contains('open')) {
+        openQueuePage();
+    }
 }
 
 function playNext() {
-    if (userQueue.length > 0) {
-        // Priority 1: Manual Queue (Takes from the top)
+    // 1: Manual User Queue has items remaining
+    if (userQueue && userQueue.length > 0) {
         const nextTrack = userQueue.shift();
         playTrack(nextTrack.url);
-        // fix this ass it can break unsure why 
-    } else if (currentTrackIndex !== -1 && currentTrackIndex < contextQueue.length - 1) {
-        // Priority 2: Auto-Queue (Next song in album/artist list)
-        currentTrackIndex++;
-        const nextTrack = contextQueue[currentTrackIndex];
-        playTrack(nextTrack.url);
-        //never allow the queue to stop allways find music to pla
-    } else {
-        console.log("Queue finished.");
+    }
+    // 2: Return to the background playlist context 
+    // (Or progress forward if we are already in it)
+    else if (contextQueue && contextQueue.length > 0) {
+        
+       //resolve the next track index based on current position in the context queue
+       //caused by userQueue taking priority and potentially shifting us forward in the context list
+        let targetIndex = currentTrackIndex === -1 ? 0 : currentTrackIndex + 1;
+
+        // Ensure the target index actually exists within the bounds of the context list
+        if (targetIndex < contextQueue.length) {
+            currentTrackIndex = targetIndex;
+            const nextTrack = contextQueue[currentTrackIndex];
+            playTrack(nextTrack.url);
+        } else {
+            console.log("Context queue reached the end after user queue cleared.");
+            stopMusic();
+        }
+    } 
+    // Out of options entirely
+    else {
+        console.log("Queue finished. No tracks remaining in user or context queues.");
         stopMusic();
     }
 }
 
-/*change so that it only goes to the top of the auto quuee not manual ie have 2
-queues one built automaticaly so music doesnt stop playing unless the user stops music
-and another built by the user so that they can add what ever songs they want to listen
-to in order
-*/
 function addToQueue(track) {
-    // Adds to the very top as requested
-    userQueue.unshift(track);
-    console.log(`Added ${track.title} to top of queue`);
+    userQueue.push(track);
+    console.log(`Added ${track.title || track.name || 'Track'} to manual user queue`);
+
+    const queuePanel = document.getElementById('queuePanel');
+    if (queuePanel && queuePanel.classList.contains('open')) {
+        openQueuePage();
+    }
 }
 
 function stopMusic() {
     if (currentSong) {
         currentSong.pause();
         currentSong.src = '';
-        currentSong.onended = null; // Prevent playNext() from firing
+        currentSong.onended = null; // Prevent playNext() from accidentally firing
         currentSong = null;
     }
-
-    // Reset context so "Play Next" doesn't have a reference point
-    contextQueue = [];
-    currentTrackIndex = -1;
 }
 
 const updateSongInfo = (currentSong) => {
@@ -488,12 +526,15 @@ const updateSongInfo = (currentSong) => {
     const trackTitle = document.getElementById('track-title');
     const artistName = document.getElementById('artist-name');
 
+    const finalTitle = track?.title || currentTrack?.title || currentTrack?.name || 'Unknown Track';
+    const finalArtist = track?.artist || currentTrack?.artist || 'Unknown Artist';
+
     if (track) {
         if (trackTitle) trackTitle.textContent = track.title;
         if (artistName) artistName.textContent = track.artist;
     } else {
-        if (trackTitle) trackTitle.textContent = 'Unknown Track';
-        if (artistName) artistName.textContent = 'Unknown Artist';
+        if (trackTitle) trackTitle.textContent = finalTitle;
+        if (artistName) artistName.textContent = finalArtist;
     }
 };
 
@@ -548,12 +589,134 @@ function showErrorPopup(message) {
 }
 
 function openQueuePage() {
-/*
-Allow the user to open and see their queued item followed by the auto
- queued items and aloow the user to move tiems in any way they like 
- consider opening the queeu as a right side panel not a main page to aloow t
- he user to contiue to add new music to the queue and see and edit the queeu
+    // Create or retrieve the right-side queue panel
+    let queuePanel = document.getElementById('queuePanel');
+
+    if (!queuePanel) {
+        queuePanel = document.createElement('div');
+        queuePanel.id = 'queuePanel';
+        queuePanel.className = 'queue-panel';
+        document.body.appendChild(queuePanel);
+    }
+
+    // Build queue HTML
+    let queueHTML = '<div class="queue-header"><h2>Queue</h2><button class="close-queue-btn" onclick="closeQueuePage()">×</button></div>';
+    queueHTML += '<div class="queue-content">';
+
+    // Display current song title using track metadata when available
+    if (currentTrack) {
+        queueHTML += '<div class="queue-item current"><div class="queue-title">Now Playing:</div><div class="queue-song">' + (currentTrack.title || currentTrack.name || 'Unknown Track') + '</div></div>';
+    } else if (currentSong) {
+        queueHTML += '<div class="queue-item current"><div class="queue-title">Now Playing:</div><div class="queue-song">Currently Playing</div></div>';
+    }
+
+    
+
+    // Display queued items
+    if (userQueue && userQueue.length > 0) {
+        queueHTML += '<div class="queue-title">Upcoming:</div>';
+        userQueue.forEach((song, index) => {
+            queueHTML += '<div class="queue-item draggable" draggable="true" data-index="' + index + '">';
+            queueHTML += '<span class="queue-number">' + (index + 1) + '.</span>';
+            queueHTML += '<span class="queue-song-name">' + (song.title || song.name || 'Unknown Track') + '</span>';
+            queueHTML += '<button class="remove-from-queue-btn" data-index="' + index + '">Remove</button>';
+            queueHTML += '</div>';
+        });
+    }
+
+    // Display all tracks in current auto-queue context (Filtered)
+    if (contextQueue && contextQueue.length > 0) {
+        let hasContextItems = false;
+        let contextHTML = '';
+
+        contextQueue.forEach((song, index) => {
+            // 1. Check if this context song is the one currently playing
+            const isCurrent = currentTrack && song.url === currentTrack.url;
+            
+            // 2. Check if this context song is already sitting in the userQueue
+            const isInUserQueue = userQueue && userQueue.some(userSong => userSong.url === song.url);
+            
+            if (!isCurrent && !isInUserQueue) {
+                hasContextItems = true;
+                contextHTML += '<div class="queue-item">';
+                contextHTML += '<span class="queue-number">' + (index + 1) + '.</span>';
+                contextHTML += '<span class="queue-song-name">' + (song.title || song.name || 'Unknown Track') + '</span>';
+                contextHTML += '</div>';
+            }
+        });
+
+        // Only append the section if there are actually remaining tracks to show
+        if (hasContextItems) {
+            queueHTML += '<div class="queue-title">All Tracks In Context:</div>';
+            queueHTML += contextHTML;
+        } else if (!userQueue || userQueue.length === 0) {
+            queueHTML += '<div class="queue-empty">Queue is empty</div>';
+        }
+
+    } else if (!userQueue || userQueue.length === 0) {
+        queueHTML += '<div class="queue-empty">Queue is empty</div>';
+    }
+
+    queueHTML += '</div>';
+    queuePanel.innerHTML = queueHTML;
+    queuePanel.classList.add('open');
 
 
-*/
+    // Remove from queue handlers
+    queuePanel.querySelectorAll('.remove-from-queue-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.dataset.index, 10);
+            if (!isNaN(index)) {
+                userQueue.splice(index, 1);
+                openQueuePage(); // Refresh the queue display
+            }
+        });
+    });
+
+    // Drag and drop reorder handlers
+    queuePanel.querySelectorAll('.queue-item.draggable').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            dragSrcIndex = parseInt(item.dataset.index, 10);
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', dragSrcIndex.toString());
+            item.classList.add('dragging');
+        });
+
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+            dragSrcIndex = null;
+            queuePanel.querySelectorAll('.queue-item').forEach(i => i.classList.remove('drag-over'));
+        });
+
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            item.classList.add('drag-over');
+        });
+
+        item.addEventListener('dragleave', () => {
+            item.classList.remove('drag-over');
+        });
+
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            item.classList.remove('drag-over');
+            const destIndex = parseInt(item.dataset.index, 10);
+            const sourceIndex = dragSrcIndex !== null ? dragSrcIndex : parseInt(e.dataTransfer.getData('text/plain'), 10);
+
+            if (!isNaN(sourceIndex) && !isNaN(destIndex) && sourceIndex !== destIndex) {
+                const [movedItem] = userQueue.splice(sourceIndex, 1);
+                userQueue.splice(destIndex, 0, movedItem);
+                openQueuePage();
+            }
+        });
+    });
+}
+
+function closeQueuePage() {
+    console.log("Closing queue panel");
+    const queuePanel = document.getElementById('queuePanel');
+    if (queuePanel) {
+        queuePanel.classList.remove('open');
+    }
 }
