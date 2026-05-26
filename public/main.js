@@ -463,6 +463,18 @@ function stopMusic() {
     currentTrackIndex = -1;
 }
 
+function switchMusicState(btn) {
+    if (currentSong) {
+        if (currentSong.paused) {
+            currentSong.play().catch(err => console.error("Playback blocked:", err));
+            btn.innerHTML = '<span>⏸</span>';
+        } else {
+            currentSong.pause();
+            btn.innerHTML = '<span>▶</span>';
+        }
+    }
+}
+
 const updateSongInfo = (currentSong) => {
     if (!currentSong || !currentSong.src) return;
 
@@ -547,12 +559,21 @@ function handleSearchInput() {
                     if (track.title.toLowerCase().match(query.toLowerCase()) ||
                         track.artist.toLowerCase().match(query.toLowerCase()) ||
                         track.album.toLowerCase().match(query.toLowerCase())) {
+                        const trackData = JSON.stringify(track).replace(/"/g, '&quot;');
 
                         searchResults.push(track); // Store matched track
                         console.log('Match found:', track);
 
                         // Display the result in the search results area
-                        searchQueryDisplay.innerHTML += `${track.artist} - ${track.title}<br>`;
+                        // searchQueryDisplay.innerHTML += `${track.artist} - ${track.title}<br>`;
+                        searchQueryDisplay.innerHTML += `<div class="search-item">
+                                                            <span class="search-item-text" onclick="playTrack('${track.url}')">
+                                                                ${track.artist} - ${track.title}
+                                                            </span>
+                                                            <button class="add-to-queue-btn" onclick="addToQueue(${trackData})">
+                                                            +
+                                                            </button>
+                                                         </div>`;
                     } else {
                         console.log('No match:', track);
                     }
@@ -569,8 +590,6 @@ function handleSearchInput() {
         topNav.classList.remove('search-active');
     }
 }
-
-
 
 document.getElementById('searchOverlay').addEventListener('click', () => {
     const searchInput = document.getElementById('searchInput');
