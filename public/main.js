@@ -628,15 +628,20 @@ function openQueuePage() {
     if (contextQueue && contextQueue.length > 0) {
         let hasContextItems = false;
         let contextHTML = '';
+        const currentContextIndexRaw = currentTrack ? contextQueue.findIndex(song => song.url === currentTrack.url) : -1;
+        const currentContextIndex = currentContextIndexRaw >= 0 ? currentContextIndexRaw : currentTrackIndex;
 
         contextQueue.forEach((song, index) => {
-            // 1. Check if this context song is the one currently playing
-            const isCurrent = currentTrack && song.url === currentTrack.url;
-            
+            // 1. Skip any context tracks that appear before or are the current playing track,
+            //    including previously consumed context tracks when the current song is from the manual queue.
+            if (currentContextIndex >= 0 && index <= currentContextIndex) {
+                return;
+            }
+
             // 2. Check if this context song is already sitting in the userQueue
             const isInUserQueue = userQueue && userQueue.some(userSong => userSong.url === song.url);
             
-            if (!isCurrent && !isInUserQueue) {
+            if (!isInUserQueue) {
                 hasContextItems = true;
                 contextHTML += '<div class="queue-item">';
                 contextHTML += '<span class="queue-number">' + (index + 1) + '.</span>';
