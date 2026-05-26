@@ -515,26 +515,64 @@ const updateSongInfo = (currentSong) => {
 
     const track = audioFiles.find(t => {
         const libraryUrl = t.url.toLowerCase().trim();
-
-        console.log("Comparing:", browserSrc, "with", libraryUrl);
         return browserSrc.endsWith(libraryUrl);
     });
 
-    console.log("Browser Source:", browserSrc);
-    console.log("Found Track Object:", track);
+    const trackTitleTrack = document.querySelector('#track-title .marquee-track');
+    const artistNameTrack = document.querySelector('#artist-name .marquee-track');
 
-    const trackTitle = document.getElementById('track-title');
-    const artistName = document.getElementById('artist-name');
-
+    // Strict fallbacks to guarantee text is never completely empty strings
     const finalTitle = track?.title || currentTrack?.title || currentTrack?.name || 'Unknown Track';
-    const finalArtist = track?.artist || currentTrack?.artist || 'Unknown Artist';
+    let finalArtist = track?.artist || currentTrack?.artist || 'Unknown Artist';
 
+    // If for some reason finalArtist is a blank string of spaces, fix it
+    if (!finalArtist.trim()) {
+        finalArtist = 'Unknown Artist';
+    }
+
+    const handleMarquee = (trackElement, text) => {
+        if (!trackElement) return;
+
+        const spans = trackElement.querySelectorAll('span');
+        if (spans.length < 2) return;
+
+        // 1. Reset everything to calculate static width accurately
+        trackElement.classList.remove('scroll-active');
+        spans[0].style.animationDuration = '';
+        spans[1].style.animationDuration = '';
+        
+        spans[0].textContent = text;
+        spans[1].textContent = ''; // Keep the second one blank while measuring
+
+        // Grab the bounding box layout safely
+        const container = trackElement.closest('.now-playing'); 
+        if (!container) return;
+        
+        // 2. Check if the text actually overflows
+        if (spans[0].scrollWidth > container.clientWidth) {
+            spans[1].textContent = text;
+
+            // 3. Speed Calculation
+            const pixelsPerSecond = 40; 
+            const dynamicDuration = spans[0].scrollWidth / pixelsPerSecond;
+
+            spans[0].style.animationDuration = `${dynamicDuration}s`;
+            spans[1].style.animationDuration = `${dynamicDuration}s`;
+
+            trackElement.classList.add('scroll-active');
+        } else {
+            // Keep it empty if it doesn't need to loop, which is fine as long as span[0] has content
+            spans[1].textContent = ''; 
+        }
+    };
+
+    // Run the handler with verified text strings
     if (track) {
-        if (trackTitle) trackTitle.textContent = track.title;
-        if (artistName) artistName.textContent = track.artist;
+        handleMarquee(trackTitleTrack, track.title || 'Unknown Track');
+        handleMarquee(artistNameTrack, track.artist || 'Unknown Artist');
     } else {
-        if (trackTitle) trackTitle.textContent = finalTitle;
-        if (artistName) artistName.textContent = finalArtist;
+        handleMarquee(trackTitleTrack, finalTitle);
+        handleMarquee(artistNameTrack, finalArtist);
     }
 };
 

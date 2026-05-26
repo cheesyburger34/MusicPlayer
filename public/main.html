@@ -41,9 +41,20 @@
             </button>
 
             <div id="now-playing-info" class="now-playing">
-                <strong id="track-title"><span>No Song Playing</span></strong>
-                <p id="artist-name" class="track-subtext"><span></span></p>
+                <div id="track-title" class="title-row">
+                    <div class="marquee-track">
+                        <span>No Song Playing</span>
+                        <span>No Song Playing</span>
+                    </div>
+                </div>
+                <div id="artist-name" class="track-subtext artist-row">
+                    <div class="marquee-track">
+                        <span>Unknown Artist</span>
+                        <span>Unknown Artist</span>
+                    </div>
+                </div>
             </div>
+
             <div class="volume-control">
                 <input type="range" class="volume-slider" min="0" max="100" value="80">
                 <span class="volume-label">80%</span>
