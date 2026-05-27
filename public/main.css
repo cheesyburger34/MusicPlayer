@@ -172,6 +172,11 @@ body {
     font-weight: 1000;
 }
 
+.view-queue-btn {
+    width: 0;
+    line-height: 7px;
+}
+
 .now-playing {
     display: flex;
     flex-direction: column;
