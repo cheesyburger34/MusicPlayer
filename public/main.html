@@ -28,18 +28,35 @@
 
     <nav class="btm-player">
         <div class="player-controls">
+            <button class="view-queue-btn" onclick="openQueuePage()">
+                <span>──<br>
+                    ──<br>
+                    ──<br>
+                </span>
+            </button>
+
             <button class="next-btn" onclick="playNext()">
                 <span>▶▶</span>
             </button>
-            <button class="add-btn" onclick="addMusic()">🗀</button>
             <button class="stop-btn" onclick="switchMusicState(this)" id="playPauseBtn">
                 <span>⏸</span>
             </button>
 
             <div id="now-playing-info" class="now-playing">
-                <strong id="track-title">No Song Playing</strong>
-                <p id="artist-name" class="track-subtext"></p>
+                <div id="track-title" class="title-row">
+                    <div class="marquee-track">
+                        <span>No Song Playing</span>
+                        <span>No Song Playing</span>
+                    </div>
+                </div>
+                <div id="artist-name" class="track-subtext artist-row">
+                    <div class="marquee-track">
+                        <span>Unknown Artist</span>
+                        <span>Unknown Artist</span>
+                    </div>
+                </div>
             </div>
+
             <div class="volume-control">
                 <input type="range" class="volume-slider" min="0" max="100" value="80">
                 <span class="volume-label">80%</span>
@@ -56,6 +73,10 @@
         <div class="search-preview" id="searchPreview">
             <span id="searchQuery">Loading search results...</span>
         </div>
+
+
+        <button class="add-btn" onclick="addMusic()">🗀</button>
+        </nav>
     </form>
 
     <!-- Background dimming layer -->
