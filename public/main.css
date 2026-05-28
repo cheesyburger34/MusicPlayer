@@ -245,7 +245,7 @@ body {
 }
 
 /*top nav styling */
-.top-nav {
+.search-form {
     position: fixed;
     top: 0;
     gap: 10%;

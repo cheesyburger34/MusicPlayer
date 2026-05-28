@@ -62,11 +62,11 @@
                 <span class="volume-label">80%</span>
             </div>
         </div>
-        <button class="add-btn" onclick="addMusic()">🗀</button>
+
     </nav>
 
-    <nav>
-        <form class="top-nav" id="topNav">
+    <nav class="top-nav" id="topNav">
+        <form class="search-form" id="searchForm">
             <div class="search-bar" id="searchBar">
                 <input type="search" id="searchInput" placeholder="Search your music..." oninput="handleSearchInput()">
             </div>
@@ -76,6 +76,7 @@
                 <span id="searchQuery">Loading search results...</span>
             </div>
         </form>
+        <button class="add-btn" onclick="addMusic()">🗀</button>
     </nav>
 
     <!-- Background dimming layer -->

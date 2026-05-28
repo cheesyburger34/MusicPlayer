@@ -619,6 +619,7 @@ loadExistingMusic();
 
 function handleSearchInput() {
     const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
     const topNav = document.getElementById('topNav');
     const query = searchInput.value.trim();
     const searchQueryDisplay = document.getElementById('searchQuery');
@@ -629,7 +630,7 @@ function handleSearchInput() {
 
         // Attach a submit listener to the top navigation bar
         // Prevents page reload and triggers the search logic instead
-        topNav.addEventListener('submit', function (event) {
+        searchForm.addEventListener('submit', function (event) {
             event.preventDefault();
 
             // Only perform a search if the user typed something
@@ -678,6 +679,7 @@ function handleSearchInput() {
 
 document.getElementById('searchOverlay').addEventListener('click', () => {
     const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
     const topNav = document.getElementById('topNav');
     searchInput.value = ''; // clear input
     topNav.classList.remove('search-active');
