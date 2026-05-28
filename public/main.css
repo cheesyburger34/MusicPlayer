@@ -147,7 +147,8 @@ body {
 .next-btn,
 .add-btn,
 .view-queue-btn {
-    padding: 8px 1.5rem; 
+    min-width: 5px;
+    padding: 2% 1.5rem;
     font-size: 16px;
     display: flex;
     justify-content: center;
