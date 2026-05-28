@@ -62,22 +62,21 @@
                 <span class="volume-label">80%</span>
             </div>
         </div>
+        <button class="add-btn" onclick="addMusic()">🗀</button>
     </nav>
 
-    <form class="top-nav" id="topNav">
-        <div class="search-bar" id="searchBar">
-            <input type="search" id="searchInput" placeholder="Search your music..." oninput="handleSearchInput()">
-        </div>
+    <nav>
+        <form class="top-nav" id="topNav">
+            <div class="search-bar" id="searchBar">
+                <input type="search" id="searchInput" placeholder="Search your music..." oninput="handleSearchInput()">
+            </div>
 
-        <!-- Dropdown preview panel -->
-        <div class="search-preview" id="searchPreview">
-            <span id="searchQuery">Loading search results...</span>
-        </div>
-
-
-        <button class="add-btn" onclick="addMusic()">🗀</button>
-        </nav>
-    </form>
+            <!-- Dropdown preview panel -->
+            <div class="search-preview" id="searchPreview">
+                <span id="searchQuery">Loading search results...</span>
+            </div>
+        </form>
+    </nav>
 
     <!-- Background dimming layer -->
     <div class="search-overlay" id="searchOverlay"></div>
