@@ -398,27 +398,52 @@ let userQueue = [];
 let contextQueue = [];
 let currentTrackIndex = -1;
 let currentSong = null;
+let currentTrack = null;
+let dragSrcIndex = null;
+
 
 function playTrack(url, allTracksInContext = []) {
     stopMusic();
 
     // 1. Update the Auto-Queue Context
-    // If tracks are provided save them so the player knows whats next
     if (allTracksInContext.length > 0) {
         contextQueue = allTracksInContext;
-        currentTrackIndex = contextQueue.findIndex(t => t.url === url);
     }
 
+    // 2. Resolve Track Metadata across all sources cleanly
+    let trackMetadata = null;
+    if (contextQueue && contextQueue.length > 0) {
+        trackMetadata = contextQueue.find(t => t.url === url);
+    }
+    if (!trackMetadata && userQueue && userQueue.length > 0) {
+        trackMetadata = userQueue.find(t => t.url === url);
+    }
+    if (!trackMetadata && typeof audioFiles !== 'undefined') {
+        trackMetadata = audioFiles.find(t => t.url === url);
+    }
+
+    // Assign metadata securely to keep the UI from displaying "Unknown Track"
+    currentTrack = trackMetadata || { url: url, title: "Unknown Track", name: "Unknown Track" };
+
+    // 3. Track Index Management
+    if (contextQueue && contextQueue.length > 0) {
+        const index = contextQueue.findIndex(track => track.url === url);
+        if (index !== -1) {
+            currentTrackIndex = index;
+        }
+    }
+
+    // 4. Initialize Audio Engine
     currentSong = new Audio(url);
 
-    // 2. Apply your existing Volume Math
+    // Volume Calculations
     const slider = document.querySelector('.volume-slider');
     if (slider) {
         const sliderVal = parseFloat(slider.value);
         currentSong.volume = (Math.pow(10, sliderVal / 100) - 1) / 9;
     }
 
-    // 3. Next song Trigger
+    // Next Track Binding
     currentSong.onended = () => {
         playNext();
     };
@@ -426,41 +451,61 @@ function playTrack(url, allTracksInContext = []) {
     currentSong.play().catch(err => console.error("Playback blocked:", err));
 
     updateSongInfo(currentSong);
+
+    // Refresh UI
+    if (document.getElementById('queuePanel')?.classList.contains('open')) {
+        openQueuePage();
+    }
 }
 
 function playNext() {
-    if (userQueue.length > 0) {
-        // Priority 1: Manual Queue (Takes from the top)
+    // 1: Manual User Queue has items remaining
+    if (userQueue && userQueue.length > 0) {
         const nextTrack = userQueue.shift();
         playTrack(nextTrack.url);
-    } else if (currentTrackIndex !== -1 && currentTrackIndex < contextQueue.length - 1) {
-        // Priority 2: Auto-Queue (Next song in album/artist list)
-        currentTrackIndex++;
-        const nextTrack = contextQueue[currentTrackIndex];
-        playTrack(nextTrack.url);
-    } else {
-        console.log("Queue finished.");
+    }
+    // 2: Return to the background playlist context 
+    // (Or progress forward if we are already in it)
+    else if (contextQueue && contextQueue.length > 0) {
+        
+       //resolve the next track index based on current position in the context queue
+       //caused by userQueue taking priority and potentially shifting us forward in the context list
+        let targetIndex = currentTrackIndex === -1 ? 0 : currentTrackIndex + 1;
+
+        // Ensure the target index actually exists within the bounds of the context list
+        if (targetIndex < contextQueue.length) {
+            currentTrackIndex = targetIndex;
+            const nextTrack = contextQueue[currentTrackIndex];
+            playTrack(nextTrack.url);
+        } else {
+            console.log("Context queue reached the end after user queue cleared.");
+            stopMusic();
+        }
+    } 
+    // Out of options entirely
+    else {
+        console.log("Queue finished. No tracks remaining in user or context queues.");
         stopMusic();
     }
 }
 
 function addToQueue(track) {
-    // Adds to the very top as requested
-    userQueue.unshift(track);
-    console.log(`Added ${track.title} to top of queue`);
+    userQueue.push(track);
+    console.log(`Added ${track.title || track.name || 'Track'} to manual user queue`);
+
+    const queuePanel = document.getElementById('queuePanel');
+    if (queuePanel && queuePanel.classList.contains('open')) {
+        openQueuePage();
+    }
 }
 
 function stopMusic() {
     if (currentSong) {
         currentSong.pause();
         currentSong.src = '';
-        currentSong.onended = null; // Prevent playNext() from firing
+        currentSong.onended = null; // Prevent playNext() from accidentally firing
         currentSong = null;
     }
-
-    // Reset context so "Play Next" doesn't have a reference point
-    contextQueue = [];
-    currentTrackIndex = -1;
 }
 
 function switchMusicState(btn) {
@@ -482,27 +527,67 @@ const updateSongInfo = (currentSong) => {
 
     const track = audioFiles.find(t => {
         const libraryUrl = t.url.toLowerCase().trim();
-
-        console.log("Comparing:", browserSrc, "with", libraryUrl);
         return browserSrc.endsWith(libraryUrl);
     });
 
-    console.log("Browser Source:", browserSrc);
-    console.log("Found Track Object:", track);
+    const trackTitleTrack = document.querySelector('#track-title .marquee-track');
+    const artistNameTrack = document.querySelector('#artist-name .marquee-track');
 
-    const trackTitle = document.getElementById('track-title');
-    const artistName = document.getElementById('artist-name');
+    // Strict fallbacks to guarantee text is never completely empty strings
+    const finalTitle = track?.title || currentTrack?.title || currentTrack?.name || 'Unknown Track';
+    let finalArtist = track?.artist || currentTrack?.artist || 'Unknown Artist';
 
+    // If for some reason finalArtist is a blank string of spaces, fix it
+    if (!finalArtist.trim()) {
+        finalArtist = 'Unknown Artist';
+    }
+
+    const handleMarquee = (trackElement, text) => {
+        if (!trackElement) return;
+
+        const spans = trackElement.querySelectorAll('span');
+        if (spans.length < 2) return;
+
+        // 1. Reset everything to calculate static width accurately
+        trackElement.classList.remove('scroll-active');
+        spans[0].style.animationDuration = '';
+        spans[1].style.animationDuration = '';
+        
+        spans[0].textContent = text;
+        spans[1].textContent = ''; // Keep the second one blank while measuring
+
+        // Grab the bounding box layout safely
+        const container = trackElement.closest('.now-playing'); 
+        if (!container) return;
+        
+        // 2. Check if the text actually overflows
+        if (spans[0].scrollWidth > container.clientWidth) {
+            spans[1].textContent = text;
+
+            // 3. Speed Calculation
+            const pixelsPerSecond = 40; 
+            const dynamicDuration = spans[0].scrollWidth / pixelsPerSecond;
+
+            spans[0].style.animationDuration = `${dynamicDuration}s`;
+            spans[1].style.animationDuration = `${dynamicDuration}s`;
+
+            trackElement.classList.add('scroll-active');
+        } else {
+            // Keep it empty if it doesn't need to loop, which is fine as long as span[0] has content
+            spans[1].textContent = ''; 
+        }
+    };
+
+    // Run the handler with verified text strings
     if (track) {
-        if (trackTitle) trackTitle.textContent = track.title;
-        if (artistName) artistName.textContent = track.artist;
+        handleMarquee(trackTitleTrack, track.title || 'Unknown Track');
+        handleMarquee(artistNameTrack, track.artist || 'Unknown Artist');
     } else {
-        if (trackTitle) trackTitle.textContent = 'Unknown Track';
-        if (artistName) artistName.textContent = 'Unknown Artist';
+        handleMarquee(trackTitleTrack, finalTitle);
+        handleMarquee(artistNameTrack, finalArtist);
     }
 };
 
-console.log(audioFiles.length)
 
 window.addEventListener('load', () => {
     const volumeSlider = document.querySelector('.volume-slider');
@@ -534,6 +619,7 @@ loadExistingMusic();
 
 function handleSearchInput() {
     const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
     const topNav = document.getElementById('topNav');
     const query = searchInput.value.trim();
     const searchQueryDisplay = document.getElementById('searchQuery');
@@ -544,7 +630,7 @@ function handleSearchInput() {
 
         // Attach a submit listener to the top navigation bar
         // Prevents page reload and triggers the search logic instead
-        topNav.addEventListener('submit', function (event) {
+        searchForm.addEventListener('submit', function (event) {
             event.preventDefault();
 
             // Only perform a search if the user typed something
@@ -593,6 +679,7 @@ function handleSearchInput() {
 
 document.getElementById('searchOverlay').addEventListener('click', () => {
     const searchInput = document.getElementById('searchInput');
+    const searchForm = document.getElementById('searchForm');
     const topNav = document.getElementById('topNav');
     searchInput.value = ''; // clear input
     topNav.classList.remove('search-active');
@@ -602,3 +689,140 @@ function showErrorPopup(message) {
     alert(`Error: ${message}`);
 }
 
+function openQueuePage() {
+    // Create or retrieve the right-side queue panel
+    let queuePanel = document.getElementById('queuePanel');
+
+    if (!queuePanel) {
+        queuePanel = document.createElement('div');
+        queuePanel.id = 'queuePanel';
+        queuePanel.className = 'queue-panel';
+        document.body.appendChild(queuePanel);
+    }
+
+    // Build queue HTML
+    let queueHTML = '<div class="queue-header"><h2>Queue</h2><button class="close-queue-btn" onclick="closeQueuePage()">×</button></div>';
+    queueHTML += '<div class="queue-content">';
+
+    // Display current song title using track metadata when available
+    if (currentTrack) {
+        queueHTML += '<div class="queue-item current"><div class="queue-title">Now Playing:</div><div class="queue-song">' + (currentTrack.title || currentTrack.name || 'Unknown Track') + '</div></div>';
+    } else if (currentSong) {
+        queueHTML += '<div class="queue-item current"><div class="queue-title">Now Playing:</div><div class="queue-song">Currently Playing</div></div>';
+    }
+
+    
+
+    // Display queued items
+    if (userQueue && userQueue.length > 0) {
+        queueHTML += '<div class="queue-title">Upcoming:</div>';
+        userQueue.forEach((song, index) => {
+            queueHTML += '<div class="queue-item draggable" draggable="true" data-index="' + index + '">';
+            queueHTML += '<span class="queue-number">' + (index + 1) + '.</span>';
+            queueHTML += '<span class="queue-song-name">' + (song.title || song.name || 'Unknown Track') + '</span>';
+            queueHTML += '<button class="remove-from-queue-btn" data-index="' + index + '">Remove</button>';
+            queueHTML += '</div>';
+        });
+    }
+
+    // Display all tracks in current auto-queue context (Filtered)
+    if (contextQueue && contextQueue.length > 0) {
+        let hasContextItems = false;
+        let contextHTML = '';
+        const currentContextIndexRaw = currentTrack ? contextQueue.findIndex(song => song.url === currentTrack.url) : -1;
+        const currentContextIndex = currentContextIndexRaw >= 0 ? currentContextIndexRaw : currentTrackIndex;
+
+        contextQueue.forEach((song, index) => {
+            // 1. Skip any context tracks that appear before or are the current playing track,
+            //    including previously consumed context tracks when the current song is from the manual queue.
+            if (currentContextIndex >= 0 && index <= currentContextIndex) {
+                return;
+            }
+
+            // 2. Check if this context song is already sitting in the userQueue
+            const isInUserQueue = userQueue && userQueue.some(userSong => userSong.url === song.url);
+            
+            if (!isInUserQueue) {
+                hasContextItems = true;
+                contextHTML += '<div class="queue-item">';
+                contextHTML += '<span class="queue-number">' + (index + 1) + '.</span>';
+                contextHTML += '<span class="queue-song-name">' + (song.title || song.name || 'Unknown Track') + '</span>';
+                contextHTML += '</div>';
+            }
+        });
+
+        // Only append the section if there are actually remaining tracks to show
+        if (hasContextItems) {
+            queueHTML += '<div class="queue-title">All Tracks In Context:</div>';
+            queueHTML += contextHTML;
+        } else if (!userQueue || userQueue.length === 0) {
+            queueHTML += '<div class="queue-empty">Queue is empty</div>';
+        }
+
+    } else if (!userQueue || userQueue.length === 0) {
+        queueHTML += '<div class="queue-empty">Queue is empty</div>';
+    }
+
+    queueHTML += '</div>';
+    queuePanel.innerHTML = queueHTML;
+    queuePanel.classList.add('open');
+
+
+    // Remove from queue handlers
+    queuePanel.querySelectorAll('.remove-from-queue-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = parseInt(e.target.dataset.index, 10);
+            if (!isNaN(index)) {
+                userQueue.splice(index, 1);
+                openQueuePage(); // Refresh the queue display
+            }
+        });
+    });
+
+    // Drag and drop reorder handlers
+    queuePanel.querySelectorAll('.queue-item.draggable').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            dragSrcIndex = parseInt(item.dataset.index, 10);
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', dragSrcIndex.toString());
+            item.classList.add('dragging');
+        });
+
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+            dragSrcIndex = null;
+            queuePanel.querySelectorAll('.queue-item').forEach(i => i.classList.remove('drag-over'));
+        });
+
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            item.classList.add('drag-over');
+        });
+
+        item.addEventListener('dragleave', () => {
+            item.classList.remove('drag-over');
+        });
+
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            item.classList.remove('drag-over');
+            const destIndex = parseInt(item.dataset.index, 10);
+            const sourceIndex = dragSrcIndex !== null ? dragSrcIndex : parseInt(e.dataTransfer.getData('text/plain'), 10);
+
+            if (!isNaN(sourceIndex) && !isNaN(destIndex) && sourceIndex !== destIndex) {
+                const [movedItem] = userQueue.splice(sourceIndex, 1);
+                userQueue.splice(destIndex, 0, movedItem);
+                openQueuePage();
+            }
+        });
+    });
+}
+
+function closeQueuePage() {
+    console.log("Closing queue panel");
+    const queuePanel = document.getElementById('queuePanel');
+    if (queuePanel) {
+        queuePanel.classList.remove('open');
+    }
+}
