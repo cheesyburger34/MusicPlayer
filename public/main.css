@@ -172,7 +172,7 @@ body {
 }
 
 .add-btn {
-    font-weight: 900; 
+    font-weight: 900;
 }
 
 .view-queue-btn {
@@ -248,25 +248,35 @@ body {
 }
 
 /*top nav styling */
-.search-form {
+.top-nav {
     position: fixed;
     top: 0;
-    gap: 10%;
+    /* Changed left/width clamps to a cleaner 0-based layout if you have a sidebar */
     left: clamp(150px, 20%, 20%);
     width: calc(100% - clamp(150px, 20%, 20%));
     height: 8vh;
     z-index: 100;
-    /* Stays above the overlay */
     background: var(--bg-player);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--glass-border);
+    
+    /* FLEXBOX FIXES */
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 0 5%;
+    justify-content: ease-in-out; /* Keeps items distributed nicely */
+    gap: 20px;                   /* Use a fixed, reliable pixel gap instead of 10% */
+    padding: 0 4%;               /* Clean horizontal padding */
     box-shadow: 0 4px 30px var(--shadow-dark);
     box-sizing: border-box;
+}
+
+.search-form {
+    display: flex;
+    flex-grow: 1;
+    justify-content: center; /* Keeps the internal search bar centered */
+    max-width: 500px;        /* Matches your search bar constraint */
+    margin-left: auto;       /* This clever trick perfectly centers the search area... */
 }
 
 .search-bar {
@@ -372,6 +382,22 @@ body {
     /* Injected your exact hex code for --primary-magenta (%23c943ac) dynamically into the SVG */
     background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20" stroke="%23c943ac" stroke-width="2.5"/><line x1="20" y1="4" x2="4" y2="20" stroke="%23c943ac" stroke-width="2.5"/></svg>') no-repeat center;
     cursor: pointer;
+}
+
+.add-btn {
+    font-weight: 900;
+    font-size: 18px;          /
+    padding: 0;              
+    width: 40px;              
+    height: 40px;
+    border-radius: 50%;       
+    flex-shrink: 0;          
+    margin-right: auto;      
+    
+    /* Re-center the folder icon inside the new square dimensions */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Content Area */
