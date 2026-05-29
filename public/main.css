@@ -126,12 +126,12 @@ body {
     backdrop-filter: blur(10px);
     border-top: 1px solid var(--glass-border);
     display: flex;
-    align-items: center; 
+    align-items: center;
     justify-content: center;
     padding: 0 2%;
     box-shadow: 0 -4px 30px var(--shadow-dark);
     box-sizing: border-box;
-    overflow: visible; 
+    overflow: visible;
 }
 
 .player-controls {
@@ -139,7 +139,8 @@ body {
     align-items: center;
     gap: 15px;
     width: 100%;
-    height: 100%; /* Spans the full height for precise internal alignment */
+    height: 100%;
+    /* Spans the full height for precise internal alignment */
     justify-content: space-between;
 }
 
@@ -159,7 +160,8 @@ body {
     border-radius: 5px;
     cursor: pointer;
     transition: background 0.3s ease, transform 0.2s ease;
-    flex-shrink: 0; /* Prevents text from squishing or breaking onto two lines */
+    flex-shrink: 0;
+    /* Prevents text from squishing or breaking onto two lines */
     box-sizing: border-box;
 }
 
@@ -256,9 +258,10 @@ body {
     left: clamp(150px, 20%, 20%);
     width: calc(100% - clamp(150px, 20%, 20%));
     height: 8vh;
-    min-height: 60px; /* Prevents layout collapse on tiny heights */
+    min-height: 60px;
+    /* Prevents layout collapse on tiny heights */
     z-index: 100;
-    
+
     background: var(--bg-player);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -268,9 +271,9 @@ body {
 
     /* Structural Layout Engine */
     display: flex;
-    align-items: center;       /* Centers all elements vertically inside the 8vh box */
-    justify-content: space-between; /* Pushes the form to the center area and the button to the right edge */
-    padding: 0 30px;           /* Clean, predictable outer padding */
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
 }
 
 /* Container for search elements */
@@ -279,8 +282,11 @@ body {
     flex-grow: 1;
     justify-content: center;
     max-width: 500px;
-    margin: 0 auto;            /* Mandates perfect mathematical centering across the nav bar */
+    margin: 0 auto;
+    position: relative; /* This is the anchor point for the dropdown */
+    width: 100%;
 }
+
 
 /* --- ISOLATED ADD BUTTON FIX --- */
 .top-nav .add-btn {
@@ -288,13 +294,13 @@ body {
     position: relative;
     top: auto;
     left: auto;
-    
+
     /* Strict sizing definitions */
     width: 45px;
     height: 45px;
-    min-width: 45px;          /* Prevents the search bar from flattening the button */
-    flex-shrink: 0;           /* Absolute priority rendering size */
-    
+    min-width: 45px;
+    flex-shrink: 0;
+
     /* Presentation */
     font-size: 20px;
     font-weight: 900;
@@ -303,13 +309,13 @@ body {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    
+
     /* Centering the folder icon perfectly inside the square button */
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;                /* Wipes out the problematic padding inherited from bottom buttons */
-    
+    padding: 0;
+
     transition: background 0.3s ease, transform 0.3s ease;
 }
 
@@ -329,6 +335,7 @@ body {
     max-width: 500px;
     background: var(--glass-light);
     transition: all 0.3s ease;
+    margin: 0 auto; 
 }
 
 .search-bar:focus-within {
@@ -363,11 +370,9 @@ body {
 /*dropdown search preview styling */
 .search-preview {
     position: absolute;
-    top: calc(8vh + 10px);
-    left: 5%;
-    right: 5%;
-    margin: 0 auto;
-    max-width: 500px;
+    top: calc(100% + 25px); 
+    left: 0;
+    width: 100%; 
     background: var(--bg-sidebar);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -377,11 +382,29 @@ body {
     box-shadow: 0 10px 30px var(--shadow-dark);
     z-index: 99;
     color: var(--text-main);
-    /* Hidden state by default */
     display: none;
     opacity: 0;
-    transform: translateY(-20px) scale(0.95);
+    transform: translateY(-10px) scale(0.98); 
     transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow-y: auto;
+}
+
+.search-preview .search-item {
+    background: var(--glass-light);
+    border: 1px solid var(--glass-border);
+}
+
+.search-preview .search-item:hover {
+    background: var(--glass-hover);
+}
+
+.search-preview::-webkit-scrollbar {
+    width: 8px;
+}
+
+.search-preview::-webkit-scrollbar-track {
+    background: var(--glass-medium);
+    border-radius: 10px;
 }
 
 /*backdrop overlay for search preview */
@@ -392,11 +415,9 @@ body {
     width: 100vw;
     height: 100vh;
     background: var(--nav-overlay);
-    /* Uses your custom overlay backdrop */
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 90;
-    /* Right below the nav elements */
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
@@ -419,22 +440,30 @@ body {
     appearance: none;
     width: 14px;
     height: 14px;
-    /* Injected your exact hex code for --primary-magenta (%23c943ac) dynamically into the SVG */
     background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><line x1="4" y1="4" x2="20" y2="20" stroke="%23c943ac" stroke-width="2.5"/><line x1="20" y1="4" x2="4" y2="20" stroke="%23c943ac" stroke-width="2.5"/></svg>') no-repeat center;
     cursor: pointer;
 }
 
+.search-item {
+    padding: 10px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+
 .add-btn {
     font-weight: 900;
-    font-size: 18px;          /
-    padding: 0;              
-    width: 40px;              
+    font-size: 18px;
+    padding: 0;
+    width: 40px;
     height: 40px;
-    border-radius: 50%;       
-    flex-shrink: 0;          
-    margin-right: auto;      
-    
-    /* Re-center the folder icon inside the new square dimensions */
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-right: auto;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -860,7 +889,6 @@ input[type="range"]::-webkit-slider-thumb {
 
 .content-header {
     margin-bottom: 40px;
-    /* Reduced from 10% to a fixed, clean gap */
     width: 100%;
 }
 
@@ -911,7 +939,6 @@ input[type="range"]::-webkit-slider-thumb {
     transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
     opacity: 0;
     pointer-events: none;
-    /* Prevent interaction while hidden */
 }
 
 .queue-panel.open {
