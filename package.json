@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@foobar404/wave": "^2.0.5",
     "better-sqlite3": "^12.9.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Player - Navigation</title>
     <link rel="stylesheet" href="/public/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/@foobar404/wave/dist/bundle.iife.js"></script>
 </head>
 
 <body>
@@ -80,6 +81,22 @@
 
     <!-- Background dimming layer -->
     <div class="search-overlay" id="searchOverlay"></div>
+
+    <div class="song-focus-page" id="songFocusPage">
+        <button class="song-focus-btn" id="songFocusBtn" onclick="openSongFocus()">
+                ↑
+        </button>
+
+        <canvas id="visualizer"></canvas>
+
+        <audio id="audioElement" controls style="display:none; z-index: 1000;"></audio>
+        <div class="ui-layer">
+            <div class="album-art"></div>
+            <button class="stop-btn" onclick="switchMusicState(this)" id="playPauseBtn">
+                <span>⏸</span>
+            </button>
+        </div>
+    </div>
 
     <div class="content">
         <div id="library" class="page-content active">
