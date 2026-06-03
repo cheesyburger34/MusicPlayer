@@ -436,6 +436,7 @@ function playTrack(url, allTracksInContext = []) {
     // 4. Initialize Audio Engine
     // currentSong = new Audio(url);
     currentSong.src = url;
+    currentSong.load(); // Forces the browser to fetch the new source cleanly
 
     // Volume Calculations
     const slider = document.querySelector('.volume-slider');
@@ -837,64 +838,31 @@ function openSongFocus() {
     });
 }
 
-// const canvas = document.getElementById('visualizer');
-// const playBtn = document.getElementById('playPauseBtn');
-
-// // Declare wave globally, but don't build it until the user clicks
-// let wave; 
-
-// playBtn.addEventListener('click', () => {
-    
-//     // Set the canvas size dynamically upon clicking
-//     if (canvas.width !== window.innerWidth) {
-//         canvas.width = window.innerWidth;
-//         canvas.height = window.innerHeight;
-//     }
-
-//     // Initialize Wave using your existing global 'currentSong' variable
-//     if (!wave) {
-//         wave = new Wave(currentSong, canvas);
-        
-//         wave.addAnimation(new wave.animations.Circle({
-//             count: 80,
-//             color: '#00ffcc',
-//             radius: 85,
-//             lineWidth: 4,
-//             gap: 2
-//         }));
-//     }
-// });
-
-let audioElement = document.querySelector("#audioElement");
 let canvasElement = document.querySelector("#visualizer");
-let wave = new Wave(audioElement, canvasElement);
+let audioElement = document.querySelector("#main-audio-player");
+const playBtn = document.getElementById('playPauseBtn');
 
-// Simple example: add an animation
-wave.addAnimation(new wave.animations.Wave());
+// Declare wave globally, but don't build it until the user clicks
+let wave; 
 
-// Intermediate example: add an animation with options
-wave.addAnimation(new wave.animations.Wave({
-    lineWidth: 10,
-    lineColor: "red",
-    count: 20
-}));
+playBtn.addEventListener('click', () => {
+    
+    // Set the canvas size dynamically upon clicking
+    if (canvasElement.width !== window.innerWidth) {
+        canvasElement.width = window.innerWidth;
+        canvasElement.height = window.innerHeight;
+    }
 
-// Expert example: add multiple animations with options
-wave.addAnimation(new wave.animations.Square({
-    count: 50,
-    diamater: 300
-}));
-
-wave.addAnimation(new wave.animations.Glob({
-    fillColor: {gradient: ["red","blue","green"], rotate: 45},
-    lineWidth: 10,
-    lineColor: "#fff"
-}));
-
-// The animations will start playing when the provided audio element is played
-
-// 'wave.animations' is an object with all possible animations on it.
-
-// Each animation is a class, so you have to new-up each animation when passed to 'addAnimation'
-
-
+    // Initialize Wave using your existing global 'currentSong' variable
+    if (!wave) {
+        wave = new Wave(audioElement, canvasElement);
+        
+        wave.addAnimation(new wave.animations.Circle({
+            count: 80,
+            color: '#00ffcc',
+            radius: 85,
+            lineWidth: 4,
+            gap: 2
+        }));
+    }
+});
