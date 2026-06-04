@@ -158,9 +158,10 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 50%;
-    height: 50%;
-    z-index: 2000;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Keep it behind your .ui-layer text elements */
+    pointer-events: none; /* Allows user clicks to pass straight through to buttons below */
 }
 
 .ui-layer {
