@@ -871,6 +871,7 @@ function initVisualizer() {
         waveInstance = new Wave(audioElement, canvasElement);
 
         // Layer 1: Base frequencies (Pink/Red gradient, thick waves)
+        // Arcs, Wave, Glob, Lines, Circles, Cubes, Flower, Shine, Square, Turntable are all elements
         waveInstance.addAnimation(
             new waveInstance.animations.Arcs({
                     lineColor: "white",
