@@ -20,9 +20,9 @@
                 <span class="nav-icon"></span>
                 <span>Artists</span>
             </a>
-            <a href="#" class="nav-item" data-page="explorePage">
+            <a href="#" class="nav-item" data-page="statsPage">
                 <span class="nav-icon"></span>
-                <span>Explore Page</span>
+                <span>Stats</span>
             </a>
         </div>
     </nav>
@@ -36,11 +36,12 @@
                 </span>
             </button>
 
+            <button class="stop-btn" onclick="switchMusicState(this)" id="playPauseBtn">
+                <span>▶</span>
+            </button>
+
             <button class="next-btn" onclick="playNext()">
                 <span>▶▶</span>
-            </button>
-            <button class="stop-btn" onclick="switchMusicState(this)" id="playPauseBtn">
-                <span>⏸</span>
             </button>
 
             <div id="now-playing-info" class="now-playing">
@@ -77,6 +78,9 @@
             </div>
         </form>
         <button class="add-btn" onclick="addMusic()">🗀</button>
+        <button id="refresh" class="sync-button" onclick="alert('reloads stop playing music and clear queue'); location.reload();">
+            <span>⟳</span>
+        </button>
     </nav>
 
     <!-- Background dimming layer -->
@@ -117,10 +121,10 @@
             <ul id="artist-list" class="artist-list"></ul>
         </div>
 
-        <div id="explorePage" class="page-content">
+        <div id="statsPage" class="page-content">
             <header class="content-header">
-                <h2>Explore Page</h2>
-                <p>Explore new music and discover your next favorite track.</p>
+                <h2>Stats Page</h2>
+                <p>View your music statistics and insights.</p>
             </header>
             <div class="stats-banner">
                 <div class="stat-item">
@@ -132,6 +136,17 @@
                     <p>Artists</p>
                 </div>
             </div>
+
+            <div class="explore-charts">
+                <div class="chart-section">
+                    <h3>Top Played Songs</h3>
+                    <ul id="top-songs-list" class="chart-list"></ul>
+                </div>
+                <div class="chart-section">
+                    <h3>Top Played Artists</h3>
+                    <ul id="top-artists-list" class="chart-list"></ul>
+                </div>
+            </div>
         </div>
 
         <div id="albumPage" class="page-content">
@@ -139,9 +154,7 @@
                 <h2>Album Page</h2>
                 <p>View an open album here</p>
             </header>
-
         </div>
-    </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@foobar404/wave@2.0.5/dist/bundle.min.js"></script>
