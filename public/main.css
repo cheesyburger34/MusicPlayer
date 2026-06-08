@@ -147,6 +147,7 @@ body {
 .stop-btn,
 .next-btn,
 .add-btn,
+.sync-button,
 .view-queue-btn {
     min-width: 5px;
     padding: 2% 1.5rem;
@@ -168,6 +169,7 @@ body {
 .stop-btn:hover,
 .next-btn:hover,
 .add-btn:hover,
+.sync-button:hover,
 .view-queue-btn:hover {
     transform: translateY(-3px);
     background: var(--button-hover-pink);
@@ -283,13 +285,15 @@ body {
     justify-content: center;
     max-width: 500px;
     margin: 0 auto;
-    position: relative; /* This is the anchor point for the dropdown */
+    position: relative;
+    /* This is the anchor point for the dropdown */
     width: 100%;
+    margin-right: min(20px);
 }
 
 
 /* --- ISOLATED ADD BUTTON FIX --- */
-.top-nav .add-btn {
+.top-nav .add-btn, .sync-button {
     /* Reset layout properties to prevent top-left breaking */
     position: relative;
     top: auto;
@@ -335,7 +339,7 @@ body {
     max-width: 500px;
     background: var(--glass-light);
     transition: all 0.3s ease;
-    margin: 0 auto; 
+    margin: 0 auto;
 }
 
 .search-bar:focus-within {
@@ -370,9 +374,9 @@ body {
 /*dropdown search preview styling */
 .search-preview {
     position: absolute;
-    top: calc(100% + 25px); 
+    top: calc(100% + 25px);
     left: 0;
-    width: 100%; 
+    width: 100%;
     background: var(--bg-sidebar);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -384,7 +388,7 @@ body {
     color: var(--text-main);
     display: none;
     opacity: 0;
-    transform: translateY(-10px) scale(0.98); 
+    transform: translateY(-10px) scale(0.98);
     transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     overflow-y: auto;
 }
@@ -879,6 +883,12 @@ input[type="range"]::-webkit-slider-thumb {
 .artist-title-clickable {
     cursor: pointer;
     margin-bottom: 15px;
+    border-radius: 8px;
+}
+
+.artist-title-clickable:hover {
+    transition: color 0.3s ease;
+    color: var(--primary-magenta);
 }
 
 .song-card-small {
@@ -935,8 +945,7 @@ input[type="range"]::-webkit-slider-thumb {
 
     /* Animation Logic */
     transform: translateX(calc(100% + 40px));
-    /* Fully off-screen + margin */
-    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
+    transition: transform 0.4s cubic-bezier(1, 0.2, 0.3, 1), opacity 0.3s ease;
     opacity: 0;
     pointer-events: none;
 }

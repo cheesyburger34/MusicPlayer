@@ -50,6 +50,15 @@ function activateItem(clickedItem) {
     const targetPage = document.getElementById(pageId);
     if (targetPage) targetPage.classList.add('active');
 
+    if (pageId === 'statsPage') {
+        if (typeof updateStatsPage === 'function') {
+            updateStatsPage();
+        }
+        if (typeof buildStatsLeaderboards === 'function') {
+            buildStatsLeaderboards();
+        }
+    }
+
     const currentPage = document.querySelector('.page-content.active');
     const nextPage = targetPage;
     if (currentPage) {
@@ -444,11 +453,34 @@ function playTrack(url, allTracksInContext = []) {
     }
 
     // Next Track Binding
-    currentSong.onended = () => {
+    currentSong.onended = async () => {
+        if (currentSong.src) {
+            // Extract just the absolute path (e.g., /musicLibrary/rock/song.mp3)
+            let trackUrl = new URL(currentSong.src).pathname;
+
+            // Decode things like %20 back into regular spaces so it matches the DB
+            trackUrl = decodeURIComponent(trackUrl);
+
+            fetch('http://localhost:3000/api/stats/listen', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: trackUrl })
+            })
+                .catch(err => console.error('Stats error:', err));
+        }
         playNext();
     };
 
-    currentSong.play().catch(err => console.error("Playback blocked:", err));
+    currentSong.play()
+        .then(() => {
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            if (playPauseBtn) playPauseBtn.innerHTML = '<span>⏸</span>';
+        })
+        .catch(err => {
+            console.error("Playback blocked:", err);
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            if (playPauseBtn) playPauseBtn.innerHTML = '<span>▶</span>';
+        });
 
     updateSongInfo(currentSong);
 
@@ -467,9 +499,9 @@ function playNext() {
     // 2: Return to the background playlist context 
     // (Or progress forward if we are already in it)
     else if (contextQueue && contextQueue.length > 0) {
-        
-       //resolve the next track index based on current position in the context queue
-       //caused by userQueue taking priority and potentially shifting us forward in the context list
+
+        //resolve the next track index based on current position in the context queue
+        //caused by userQueue taking priority and potentially shifting us forward in the context list
         let targetIndex = currentTrackIndex === -1 ? 0 : currentTrackIndex + 1;
 
         // Ensure the target index actually exists within the bounds of the context list
@@ -481,7 +513,7 @@ function playNext() {
             console.log("Context queue reached the end after user queue cleared.");
             stopMusic();
         }
-    } 
+    }
     // Out of options entirely
     else {
         console.log("Queue finished. No tracks remaining in user or context queues.");
@@ -509,14 +541,30 @@ function stopMusic() {
 }
 
 function switchMusicState(btn) {
-    if (currentSong) {
-        if (currentSong.paused) {
-            currentSong.play().catch(err => console.error("Playback blocked:", err));
-            btn.innerHTML = '<span>⏸</span>';
-        } else {
-            currentSong.pause();
-            btn.innerHTML = '<span>▶</span>';
-        }
+    if (!btn) {
+        btn = document.getElementById('playPauseBtn');
+    }
+
+    if (!currentSong) return;
+
+    if (userQueue && userQueue.length > 0) {
+        console.log("Manual queue has pending tracks. Playing next in queue.");
+        playNext();
+        return;
+    }
+
+    if (currentSong.paused) {
+        currentSong.play()
+            .then(() => {
+                if (btn) btn.innerHTML = '<span>⏸</span>';
+            })
+            .catch(err => {
+                console.error("Playback blocked:", err);
+                if (btn) btn.innerHTML = '<span>▶</span>';
+            });
+    } else {
+        currentSong.pause();
+        if (btn) btn.innerHTML = '<span>▶</span>';
     }
 }
 
@@ -552,20 +600,20 @@ const updateSongInfo = (currentSong) => {
         trackElement.classList.remove('scroll-active');
         spans[0].style.animationDuration = '';
         spans[1].style.animationDuration = '';
-        
+
         spans[0].textContent = text;
         spans[1].textContent = ''; // Keep the second one blank while measuring
 
         // Grab the bounding box layout safely
-        const container = trackElement.closest('.now-playing'); 
+        const container = trackElement.closest('.now-playing');
         if (!container) return;
-        
+
         // 2. Check if the text actually overflows
         if (spans[0].scrollWidth > container.clientWidth) {
             spans[1].textContent = text;
 
             // 3. Speed Calculation
-            const pixelsPerSecond = 40; 
+            const pixelsPerSecond = 40;
             const dynamicDuration = spans[0].scrollWidth / pixelsPerSecond;
 
             spans[0].style.animationDuration = `${dynamicDuration}s`;
@@ -574,7 +622,7 @@ const updateSongInfo = (currentSong) => {
             trackElement.classList.add('scroll-active');
         } else {
             // Keep it empty if it doesn't need to loop, which is fine as long as span[0] has content
-            spans[1].textContent = ''; 
+            spans[1].textContent = '';
         }
     };
 
@@ -617,6 +665,10 @@ window.addEventListener('load', () => {
 // Call the auto-loader when the script runs
 loadExistingMusic();
 
+
+/*---------------------------------------------
+    5. THE SEARCHER
+---------------------------------------------*/
 function handleSearchInput() {
     const searchInput = document.getElementById('searchInput');
     const searchForm = document.getElementById('searchForm');
@@ -689,7 +741,12 @@ function showErrorPopup(message) {
     alert(`Error: ${message}`);
 }
 
+/*---------------------------------------------
+    6. THE QUEUE
+---------------------------------------------*/
 function openQueuePage() {
+
+
     // Create or retrieve the right-side queue panel
     let queuePanel = document.getElementById('queuePanel');
 
@@ -711,7 +768,7 @@ function openQueuePage() {
         queueHTML += '<div class="queue-item current"><div class="queue-title">Now Playing:</div><div class="queue-song">Currently Playing</div></div>';
     }
 
-    
+
 
     // Display queued items
     if (userQueue && userQueue.length > 0) {
@@ -741,7 +798,7 @@ function openQueuePage() {
 
             // 2. Check if this context song is already sitting in the userQueue
             const isInUserQueue = userQueue && userQueue.some(userSong => userSong.url === song.url);
-            
+
             if (!isInUserQueue) {
                 hasContextItems = true;
                 contextHTML += '<div class="queue-item">';
@@ -826,3 +883,107 @@ function closeQueuePage() {
         queuePanel.classList.remove('open');
     }
 }
+
+/*---------------------------------------------
+7. Statistics
+---------------------------------------------*/
+
+// --- UPDATED UI METRIC MAPPING ENGINE ---
+async function updateStatsPageStats() {
+    try {
+        const response = await fetch('http://localhost:3000/api/stats');
+        const data = await response.json();
+
+        // Play/Listen metrics targets
+        const totalPlaysElem = document.getElementById('stat-total-plays');
+        const activeArtistsElem = document.getElementById('stat-artists-listened');
+
+        // Global library inventory targets
+        const globalSongCountElem = document.getElementById('stat-song-count');
+        const globalArtistCountElem = document.getElementById('stat-artist-count');
+
+        // Map listening counts dynamically
+        if (totalPlaysElem) {
+            totalPlaysElem.textContent = data.totalPlaysCount;
+        }
+        if (activeArtistsElem) {
+            activeArtistsElem.textContent = data.uniqueArtistsListened;
+        }
+
+        // Map global library inventory counts dynamically
+        if (globalSongCountElem) {
+            globalSongCountElem.textContent = data.totalSongsInLibrary;
+        }
+        if (globalArtistCountElem) {
+            globalArtistCountElem.textContent = data.totalArtistsInLibrary;
+        }
+    } catch (error) {
+        console.error('UI stats collection injection error:', error);
+    }
+}
+
+async function buildStatsLeaderboards() {
+    try {
+        // 1. Fetch your individual song and artist rankings from the backend
+        const response = await fetch('http://localhost:3000/api/stats/top');
+        const data = await response.json();
+
+        const songsList = document.getElementById('top-songs-list');
+        const artistsList = document.getElementById('top-artists-list');
+
+        // Clear previous lists to prevent duplication on refresh
+        if (songsList) songsList.innerHTML = '';
+        if (artistsList) artistsList.innerHTML = '';
+
+
+        // 2. Build the Top Songs list items dynamically
+        if (songsList && data.topSongs) {
+            data.topSongs.forEach((track, index) => {
+                const li = document.createElement('li');
+                li.className = 'chart-item';
+                li.innerHTML = `
+                    <span class="rank">#${index + 1}</span>
+                    <div class="track-details">
+                        <span class="track-title">${track.title}</span>
+                        <span class="track-artist">${track.artist}</span>
+                    </div>
+                    <span class="play-count">${track.plays} plays</span>
+                `;
+                songsList.appendChild(li);
+            });
+        }
+
+        // 3. Build the Top Artists list items dynamically
+        if (artistsList && data.topArtists) {
+            data.topArtists.forEach((artist, index) => {
+                const li = document.createElement('li');
+                li.className = 'chart-item';
+                li.innerHTML = `
+                    <span class="rank">#${index + 1}</span>
+                    <span class="artist-name">${artist.artist}</span>
+                    <span class="play-count">${artist.totalPlays} plays</span>
+                `;
+                artistsList.appendChild(li);
+            });
+        }
+
+    } catch (error) {
+        console.error('Failed to construct the stats leaderboard:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateStatsPageStats();
+    buildStatsLeaderboards();
+
+    // 2. Manual Update Commitment Button 
+    const refreshBtn = document.getElementById('refresh-stats-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            // ANNOTATION: Forces a safe, non-destructive UI sync without wiping out userQueue arrays
+            updateStatsPageStats();
+            buildStatsLeaderboards();
+            console.log("User explicitly committed to layout redraw.");
+        });
+    }
+});
