@@ -126,20 +126,103 @@ body {
     backdrop-filter: blur(10px);
     border-top: 1px solid var(--glass-border);
     display: flex;
-    align-items: center; 
+    align-items: center;
     justify-content: center;
     padding: 0 2%;
     box-shadow: 0 -4px 30px var(--shadow-dark);
     box-sizing: border-box;
-    overflow: visible; 
+    overflow: visible;
+    z-index: 1000;
 }
+
+.song-focus-page {
+    position: fixed;
+    background: rgba(0, 0, 0, 0.8);
+    margin-top: 100vh;
+    width: 100vw;
+    height: 100vh;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transform: translateY(0);
+    transition: transform 0.5s ease-in-out;
+}
+
+.song-focus-page.active {
+    transform: translateY(-100vh);
+}
+
+#visualizer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Keep it behind your .ui-layer text elements */
+    pointer-events: none; /* Allows user clicks to pass straight through to buttons below */
+}
+
+.ui-layer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    text-align: center;
+}
+
+/* Placeholder album art styling for the song focus page */
+.album-art {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: url('album-cover.jpg') center/cover alt='Album Art';
+}
+
+.song-focus-btn {
+    font-size: 30px;
+    height: 35px;
+    width: 75px;
+    margin-top: -125vh;
+    margin-left: 70vw;
+    z-index: 10;
+    border-radius: 15%;
+    color: var(--text-muted);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--glass-border);
+    cursor: pointer;
+    position: absolute;
+    transform: rotateX(0);
+    transition: transform 0.5s ease-in-out, background-color 0.5s ease-in-out;
+}
+
+.song-focus-btn.active {
+    /* animation: swoosh 1.5s cubic-bezier(0.25, 1, 0.5, 1); */
+    transform: translateY(100vh) rotateX(180deg);
+}
+
+/* @keyframes swoosh {
+    0% {
+        transform: rotateX(0);
+    }
+
+    100% {
+        transform: rotateX(180deg);
+    }
+} */
 
 .player-controls {
     display: flex;
     align-items: center;
     gap: 15px;
     width: 100%;
-    height: 100%; /* Spans the full height for precise internal alignment */
+    height: 100%;
+    /* Spans the full height for precise internal alignment */
     justify-content: space-between;
 }
 
@@ -147,7 +230,7 @@ body {
 .next-btn,
 .add-btn,
 .view-queue-btn {
-    padding: 8px 1.5rem; 
+    padding: 8px 1.5rem;
     font-size: 16px;
     display: flex;
     justify-content: center;
@@ -158,7 +241,8 @@ body {
     border-radius: 5px;
     cursor: pointer;
     transition: background 0.3s ease, transform 0.2s ease;
-    flex-shrink: 0; /* Prevents text from squishing or breaking onto two lines */
+    flex-shrink: 0;
+    /* Prevents text from squishing or breaking onto two lines */
     box-sizing: border-box;
 }
 
@@ -171,7 +255,7 @@ body {
 }
 
 .add-btn {
-    font-weight: 900; 
+    font-weight: 900;
 }
 
 .view-queue-btn {
@@ -331,6 +415,7 @@ body {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
     transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
 }
 
 /*backdrop overlay for search preview */
@@ -349,6 +434,7 @@ body {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
+
 }
 
 .search-active .search-preview {

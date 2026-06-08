@@ -397,7 +397,8 @@ function goBackTopage() {
 let userQueue = [];
 let contextQueue = [];
 let currentTrackIndex = -1;
-let currentSong = null;
+let currentSong = document.getElementById('main-audio-player');
+// currentTrack will hold the metadata of the currently playing track for easy access across the UI
 let currentTrack = null;
 let dragSrcIndex = null;
 
@@ -434,7 +435,9 @@ function playTrack(url, allTracksInContext = []) {
     }
 
     // 4. Initialize Audio Engine
-    currentSong = new Audio(url);
+    // currentSong = new Audio(url);
+    currentSong.src = url;
+    currentSong.load(); // Forces the browser to fetch the new source cleanly
 
     // Volume Calculations
     const slider = document.querySelector('.volume-slider');
@@ -456,6 +459,8 @@ function playTrack(url, allTracksInContext = []) {
     if (document.getElementById('queuePanel')?.classList.contains('open')) {
         openQueuePage();
     }
+
+    initVisualizer();
 }
 
 function playNext() {
@@ -467,9 +472,9 @@ function playNext() {
     // 2: Return to the background playlist context 
     // (Or progress forward if we are already in it)
     else if (contextQueue && contextQueue.length > 0) {
-        
-       //resolve the next track index based on current position in the context queue
-       //caused by userQueue taking priority and potentially shifting us forward in the context list
+
+        //resolve the next track index based on current position in the context queue
+        //caused by userQueue taking priority and potentially shifting us forward in the context list
         let targetIndex = currentTrackIndex === -1 ? 0 : currentTrackIndex + 1;
 
         // Ensure the target index actually exists within the bounds of the context list
@@ -481,7 +486,7 @@ function playNext() {
             console.log("Context queue reached the end after user queue cleared.");
             stopMusic();
         }
-    } 
+    }
     // Out of options entirely
     else {
         console.log("Queue finished. No tracks remaining in user or context queues.");
@@ -500,11 +505,9 @@ function addToQueue(track) {
 }
 
 function stopMusic() {
-    if (currentSong) {
+    if (currentSong && !currentSong.paused) {
         currentSong.pause();
-        currentSong.src = '';
-        currentSong.onended = null; // Prevent playNext() from accidentally firing
-        currentSong = null;
+        // Remove currentSong = null; so the object stays alive for the visualizer
     }
 }
 
@@ -552,20 +555,20 @@ const updateSongInfo = (currentSong) => {
         trackElement.classList.remove('scroll-active');
         spans[0].style.animationDuration = '';
         spans[1].style.animationDuration = '';
-        
+
         spans[0].textContent = text;
         spans[1].textContent = ''; // Keep the second one blank while measuring
 
         // Grab the bounding box layout safely
-        const container = trackElement.closest('.now-playing'); 
+        const container = trackElement.closest('.now-playing');
         if (!container) return;
-        
+
         // 2. Check if the text actually overflows
         if (spans[0].scrollWidth > container.clientWidth) {
             spans[1].textContent = text;
 
             // 3. Speed Calculation
-            const pixelsPerSecond = 40; 
+            const pixelsPerSecond = 40;
             const dynamicDuration = spans[0].scrollWidth / pixelsPerSecond;
 
             spans[0].style.animationDuration = `${dynamicDuration}s`;
@@ -574,7 +577,7 @@ const updateSongInfo = (currentSong) => {
             trackElement.classList.add('scroll-active');
         } else {
             // Keep it empty if it doesn't need to loop, which is fine as long as span[0] has content
-            spans[1].textContent = ''; 
+            spans[1].textContent = '';
         }
     };
 
@@ -711,7 +714,7 @@ function openQueuePage() {
         queueHTML += '<div class="queue-item current"><div class="queue-title">Now Playing:</div><div class="queue-song">Currently Playing</div></div>';
     }
 
-    
+
 
     // Display queued items
     if (userQueue && userQueue.length > 0) {
@@ -741,7 +744,7 @@ function openQueuePage() {
 
             // 2. Check if this context song is already sitting in the userQueue
             const isInUserQueue = userQueue && userQueue.some(userSong => userSong.url === song.url);
-            
+
             if (!isInUserQueue) {
                 hasContextItems = true;
                 contextHTML += '<div class="queue-item">';
@@ -824,5 +827,88 @@ function closeQueuePage() {
     const queuePanel = document.getElementById('queuePanel');
     if (queuePanel) {
         queuePanel.classList.remove('open');
+    }
+}
+
+function openSongFocus() {
+    const songFocusBtn = document.getElementById('songFocusBtn');
+    const songFocusPage = document.getElementById('songFocusPage');
+
+    if (!songFocusBtn || !songFocusPage) return;
+
+    // Toggle both classes together cleanly without conditional blocks
+    songFocusBtn.classList.toggle('active');
+    songFocusPage.classList.toggle('active');
+}
+
+// Declare the visualizer instance globally
+let waveInstance = null;
+
+function initVisualizer() {
+    const audioElement = document.querySelector("#main-audio-player");
+    const canvasElement = document.querySelector("#visualizer");
+
+    // NEW: Let's log exactly what the script sees
+    console.log("1. Audio Element found?", !!audioElement);
+    console.log("2. Canvas Element found?", !!canvasElement);
+    console.log("3. Wave Library loaded?", typeof Wave !== 'undefined');
+
+    if (!audioElement || !canvasElement || typeof Wave === 'undefined') {
+        console.error("Visualizer aborted. Check the logs above to see what is missing.");
+        return;
+    }
+
+    // FIX 1: Bypass browser security blocks for visualizers
+    audioElement.crossOrigin = "anonymous";
+
+    // FIX 2: Initialize Wave only once, passing the raw audio element
+    if (!waveInstance) {
+        // Adjust internal canvas resolution to match screen cleanly
+        canvasElement.width = window.innerWidth;
+        canvasElement.height = window.innerHeight;
+
+        // The library handles all AudioContext routing internally here
+        waveInstance = new Wave(audioElement, canvasElement);
+
+        // Layer 1: Base frequencies (Pink/Red gradient, thick waves)
+        // Arcs, Wave, Glob, Lines, Circles, Cubes, Flower, Shine, Square, Turntable are all elements
+        waveInstance.addAnimation(
+            new waveInstance.animations.Arcs({
+                lineColor: "white",
+                lineWidth: 4,
+                fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                count: 60,
+                rounded: true,
+                diameter: 300, // Controls how large the center circle is
+                frequencyBand: "base" // Focuses the arc reaction on the beat
+            })
+        );
+
+        // Layer 2: Full spectrum (Purple/Blue/Green gradient, dense waves)
+        waveInstance.addAnimation(
+            new waveInstance.animations.Lines({
+                lineColor: "white",
+                lineWidth: 10,
+                fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                mirroredX: true,
+                count: 60,
+                rounded: true
+            })
+        );
+
+        // Layer 3: High frequencies (Yellow/Pink gradient, medium waves)
+        waveInstance.addAnimation(
+            new waveInstance.animations.Wave({
+                lineColor: "white",
+                lineWidth: 10,
+                fillColor: { gradient: ["#FBDA61", "#FF5ACD"] },
+                mirroredX: true,
+                count: 25,
+                rounded: true,
+                frequencyBand: "highs"
+            })
+        );
+
+        console.log("Multi-layered wave visualizer successfully attached.");
     }
 }
