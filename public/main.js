@@ -874,14 +874,14 @@ function initVisualizer() {
         // Arcs, Wave, Glob, Lines, Circles, Cubes, Flower, Shine, Square, Turntable are all elements
         waveInstance.addAnimation(
             new waveInstance.animations.Arcs({
-                    lineColor: "white",
-                    lineWidth: 4,
-                    fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                    count: 60,
-                    rounded: true,
-                    diameter: 300, // Controls how large the center circle is
-                    frequencyBand: "base" // Focuses the arc reaction on the beat
-                })
+                lineColor: "white",
+                lineWidth: 4,
+                fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                count: 60,
+                rounded: true,
+                diameter: 300, // Controls how large the center circle is
+                frequencyBand: "base" // Focuses the arc reaction on the beat
+            })
         );
 
         // Layer 2: Full spectrum (Purple/Blue/Green gradient, dense waves)
