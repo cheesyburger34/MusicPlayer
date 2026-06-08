@@ -535,6 +535,8 @@ const updateSongInfo = (currentSong) => {
 
     const trackTitleTrack = document.querySelector('#track-title .marquee-track');
     const artistNameTrack = document.querySelector('#artist-name .marquee-track');
+    const trackTitleTrackFocus = document.querySelector('#track-title-focus .marquee-track');
+    const artistNameTrackFocus = document.querySelector('#artist-name-focus .marquee-track');
 
     // Strict fallbacks to guarantee text is never completely empty strings
     const finalTitle = track?.title || currentTrack?.title || currentTrack?.name || 'Unknown Track';
@@ -555,7 +557,6 @@ const updateSongInfo = (currentSong) => {
         trackElement.classList.remove('scroll-active');
         spans[0].style.animationDuration = '';
         spans[1].style.animationDuration = '';
-
         spans[0].textContent = text;
         spans[1].textContent = ''; // Keep the second one blank while measuring
 
@@ -581,13 +582,17 @@ const updateSongInfo = (currentSong) => {
         }
     };
 
-    // Run the handler with verified text strings
+    // Run the handler with verified text strings on both player instances
     if (track) {
         handleMarquee(trackTitleTrack, track.title || 'Unknown Track');
         handleMarquee(artistNameTrack, track.artist || 'Unknown Artist');
+        handleMarquee(trackTitleTrackFocus, track.title || 'Unknown Track');
+        handleMarquee(artistNameTrackFocus, track.artist || 'Unknown Artist');
     } else {
         handleMarquee(trackTitleTrack, finalTitle);
         handleMarquee(artistNameTrack, finalArtist);
+        handleMarquee(trackTitleTrackFocus, finalTitle);
+        handleMarquee(artistNameTrackFocus, finalArtist);
     }
 };
 
@@ -715,7 +720,6 @@ function openQueuePage() {
     }
 
 
-
     // Display queued items
     if (userQueue && userQueue.length > 0) {
         queueHTML += '<div class="queue-title">Upcoming:</div>';
@@ -744,7 +748,6 @@ function openQueuePage() {
 
             // 2. Check if this context song is already sitting in the userQueue
             const isInUserQueue = userQueue && userQueue.some(userSong => userSong.url === song.url);
-
             if (!isInUserQueue) {
                 hasContextItems = true;
                 contextHTML += '<div class="queue-item">';

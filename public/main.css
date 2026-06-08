@@ -132,7 +132,7 @@ body {
     box-shadow: 0 -4px 30px var(--shadow-dark);
     box-sizing: border-box;
     overflow: visible;
-    z-index: 1000;
+    z-index: 5;
 }
 
 .song-focus-page {
@@ -187,7 +187,7 @@ body {
     width: 75px;
     margin-top: -125vh;
     margin-left: 70vw;
-    z-index: 10;
+    z-index: 150;
     border-radius: 15%;
     color: var(--text-muted);
     background: transparent;
