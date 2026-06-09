@@ -78,7 +78,8 @@
             </div>
         </form>
         <button class="add-btn" onclick="addMusic()">🗀</button>
-        <button id="refresh" class="sync-button" onclick="alert('reloads stop playing music and clear queue'); location.reload();">
+        <button id="refresh" class="sync-button"
+            onclick="alert('reloads stop playing music and clear queue'); location.reload();">
             <span>⟳</span>
         </button>
     </nav>
@@ -88,9 +89,11 @@
 
     <div class="song-focus-page" id="songFocusPage">
         <button class="song-focus-btn" id="songFocusBtn" onclick="openSongFocus()">
-                ^
+            ^
         </button>
-
+        <div class="visualizer-slider" id="visualizerSlider">
+            <input type="range" min="1" max="9" step="1" oninput="updateVisualizerType(this.value)" value="1">
+        </div>
         <canvas id="visualizer"></canvas>
 
         <audio id="main-audio-player" crossorigin="anonymous"></audio>
@@ -116,64 +119,65 @@
         </div>
     </div>
 
-    <div class="content">
-        <div id="library" class="page-content active">
-            <header class="content-header">
-                <h2>Library</h2>
-                <p>Browse your complete music collection</p>
-            </header>
-            <div id="library-grid" class="grid-container">
-                <p>Loading your library...</p>
-            </div>
-        </div>
 
-        <div id="artists" class="page-content">
-            <header class="content-header">
-                <h2>Artists</h2>
-                <p>Explore music by your favorite artists</p>
-            </header>
-            <ul id="artist-list" class="artist-list"></ul>
-        </div>
-
-        <div id="statsPage" class="page-content">
-            <header class="content-header">
-                <h2>Stats Page</h2>
-                <p>View your music statistics and insights.</p>
-            </header>
-            <div class="stats-banner">
-                <div class="stat-item">
-                    <h3 id="stat-song-count">0</h3>
-                    <p>Songs</p>
-                </div>
-                <div class="stat-item">
-                    <h3 id="stat-artist-count">0</h3>
-                    <p>Artists</p>
+        <div class="content">
+            <div id="library" class="page-content active">
+                <header class="content-header">
+                    <h2>Library</h2>
+                    <p>Browse your complete music collection</p>
+                </header>
+                <div id="library-grid" class="grid-container">
+                    <p>Loading your library...</p>
                 </div>
             </div>
 
-            <div class="explore-charts">
-                <div class="chart-section">
-                    <h3>Top Played Songs</h3>
-                    <ul id="top-songs-list" class="chart-list"></ul>
+            <div id="artists" class="page-content">
+                <header class="content-header">
+                    <h2>Artists</h2>
+                    <p>Explore music by your favorite artists</p>
+                </header>
+                <ul id="artist-list" class="artist-list"></ul>
+            </div>
+
+            <div id="statsPage" class="page-content">
+                <header class="content-header">
+                    <h2>Stats Page</h2>
+                    <p>View your music statistics and insights.</p>
+                </header>
+                <div class="stats-banner">
+                    <div class="stat-item">
+                        <h3 id="stat-song-count">0</h3>
+                        <p>Songs</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3 id="stat-artist-count">0</h3>
+                        <p>Artists</p>
+                    </div>
                 </div>
-                <div class="chart-section">
-                    <h3>Top Played Artists</h3>
-                    <ul id="top-artists-list" class="chart-list"></ul>
+
+                <div class="explore-charts">
+                    <div class="chart-section">
+                        <h3>Top Played Songs</h3>
+                        <ul id="top-songs-list" class="chart-list"></ul>
+                    </div>
+                    <div class="chart-section">
+                        <h3>Top Played Artists</h3>
+                        <ul id="top-artists-list" class="chart-list"></ul>
+                    </div>
                 </div>
+            </div>
+
+            <div id="albumPage" class="page-content">
+                <header class="content-header">
+                    <h2>Album Page</h2>
+                    <p>View an open album here</p>
+                </header>
             </div>
         </div>
 
-        <div id="albumPage" class="page-content">
-            <header class="content-header">
-                <h2>Album Page</h2>
-                <p>View an open album here</p>
-            </header>
-        </div>
-    </div>
+        <script src="https://cdn.jsdelivr.net/npm/@foobar404/wave@2.0.5/dist/bundle.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/@foobar404/wave@2.0.5/dist/bundle.min.js"></script>
-    
-    <script src="main.js" async></script>
+        <script src="main.js" async></script>
 </body>
 
 </html>

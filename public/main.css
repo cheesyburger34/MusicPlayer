@@ -178,7 +178,6 @@ body {
     width: 150px;
     height: 150px;
     border-radius: 50%;
-    background: url('album-cover.jpg') center/cover alt='Album Art';
 }
 
 .song-focus-btn {
@@ -204,6 +203,15 @@ body {
 .song-focus-btn.active {
     /* animation: swoosh 1.5s cubic-bezier(0.25, 1, 0.5, 1); */
     transform: translateY(100vh) rotateX(180deg);
+}
+
+.visualizer-slider {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 /* @keyframes swoosh {

@@ -410,7 +410,7 @@ let currentSong = document.getElementById('main-audio-player');
 // currentTrack will hold the metadata of the currently playing track for easy access across the UI
 let currentTrack = null;
 let dragSrcIndex = null;
-
+// const visualizerType = document.getElementById('visualizerSlider')?.value || '1';
 
 function playTrack(url, allTracksInContext = []) {
     stopMusic();
@@ -907,6 +907,7 @@ let waveInstance = null;
 function initVisualizer() {
     const audioElement = document.querySelector("#main-audio-player");
     const canvasElement = document.querySelector("#visualizer");
+    // 0 = Arcs, 1 = Lines, 2 = Wave, 3 = Glob, 4 = Circles, 5 = Cubes, 6 = Flower, 7 = Shine, 8 = Square, 9 = Turntable
 
     // NEW: Let's log exactly what the script sees
     console.log("1. Audio Element found?", !!audioElement);
@@ -932,44 +933,151 @@ function initVisualizer() {
 
         // Layer 1: Base frequencies (Pink/Red gradient, thick waves)
         // Arcs, Wave, Glob, Lines, Circles, Cubes, Flower, Shine, Square, Turntable are all elements
-        waveInstance.addAnimation(
-            new waveInstance.animations.Arcs({
-                lineColor: "white",
-                lineWidth: 4,
-                fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                count: 60,
-                rounded: true,
-                diameter: 300, // Controls how large the center circle is
-                frequencyBand: "base" // Focuses the arc reaction on the beat
-            })
-        );
-
-        // Layer 2: Full spectrum (Purple/Blue/Green gradient, dense waves)
-        waveInstance.addAnimation(
-            new waveInstance.animations.Lines({
-                lineColor: "white",
-                lineWidth: 10,
-                fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                mirroredX: true,
-                count: 60,
-                rounded: true
-            })
-        );
-
-        // Layer 3: High frequencies (Yellow/Pink gradient, medium waves)
-        waveInstance.addAnimation(
-            new waveInstance.animations.Wave({
-                lineColor: "white",
-                lineWidth: 10,
-                fillColor: { gradient: ["#FBDA61", "#FF5ACD"] },
-                mirroredX: true,
-                count: 25,
-                rounded: true,
-                frequencyBand: "highs"
-            })
-        );
+         waveInstance.addAnimation(
+                    new waveInstance.animations.Arcs({
+                        lineColor: "white",
+                        lineWidth: 4,
+                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                        count: 60,
+                        rounded: true,
+                        diameter: 300, // Controls how large the center circle is
+                        frequencyBand: "base" // Focuses the arc reaction on the beat
+                    })
+                );
 
         console.log("Multi-layered wave visualizer successfully attached.");
+    }
+}
+
+function updateVisualizerType(typeIndex) {
+    visualizerType = typeIndex;
+    if (!waveInstance) {
+        console.warn("Visualizer not initialized yet. Cannot change type.");
+        return;
+    } else {
+        switch (visualizerType) {
+            case '1':
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Arcs({
+                        lineColor: "white",
+                        lineWidth: 4,
+                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                        count: 60,
+                        rounded: true,
+                        diameter: 300, // Controls how large the center circle is
+                        frequencyBand: "base" // Focuses the arc reaction on the beat
+                    })
+                );
+                console.log("Visualizer initialized with Arcs animation on base frequencies.");
+                break;
+            case '2':
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Wave({
+                        lineColor: "white",
+                        lineWidth: 10,
+                        fillColor: { gradient: ["#FBDA61", "#FF5ACD"] },
+                        mirroredX: true,
+                        count: 25,
+                        rounded: true,
+                        frequencyBand: "highs"
+                    })
+                );
+                console.log("Visualizer initialized with Wave animation on high frequencies.");
+                break;
+            case '3':
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Glob({
+                        lineColor: "white",
+                        lineWidth: 10,
+                        fillColor: { gradient: ["#FBDA61", "#FF5ACD"] },
+                        mirroredX: true,
+                        count: 25,
+                        rounded: true,
+                        frequencyBand: "highs"
+                    })
+                );
+                console.log("Visualizer initialized with Glob animation on high frequencies.");
+                break;
+            case '4':
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Lines({
+                        lineColor: "white",
+                        lineWidth: 10,
+                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                        mirroredX: true,
+                        count: 60,
+                        rounded: true
+                    })
+                );
+                console.log("Visualizer initialized with Lines animation.");
+                break;
+            case '5':
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Circles({
+                        lineColor: "white",
+                        lineWidth: 10,
+                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                        mirroredX: true,
+                        count: 60,
+                        rounded: true
+                    })
+                );
+                console.log("Visualizer initialized with Circles animation.");
+                break;
+            case '6':
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Cubes({
+                        lineColor: "white",
+                        lineWidth: 10,
+                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                        mirroredX: true,
+                        count: 60,
+                        rounded: true
+                    })
+                );
+                console.log("Visualizer initialized with Cubes animation.");
+                break;
+            case '7':
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Flower({
+                        lineColor: "white",
+                        lineWidth: 10,
+                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                        mirroredX: true,
+                        count: 60,
+                        rounded: true
+                    })
+                );
+                console.log("Visualizer initialized with Flower animation.");
+                break;
+            case '8':
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Shine({
+                        lineColor: "white",
+                        lineWidth: 10,
+                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                        mirroredX: true,
+                        count: 60,
+                        rounded: true
+                    })
+                );
+                console.log("Visualizer initialized with Shine animation.");
+                break;
+            case '9':
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Square({
+                        lineColor: "white",
+                        lineWidth: 10,
+                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                        mirroredX: true,
+                        count: 60,
+                        rounded: true
+                    })
+                );
+                console.log("Visualizer initialized with Square animation.");
+                break;
+            // Add cases for other visualizer types
+        }
     }
 }
 /*---------------------------------------------
