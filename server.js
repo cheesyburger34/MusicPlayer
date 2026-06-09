@@ -25,6 +25,7 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const mm = require('music-metadata');
 const crypto = require('crypto');
+const os = require('os');
 
 const app = express();
 app.use(cors());
@@ -58,7 +59,14 @@ const upload = multer({
 });
 
 const Database = require('better-sqlite3');
-const db = new Database('library.db');
+const dbPath = path.join(os.tmpdir(), 'library.db');
+const historyDbPath = path.join(os.tmpdir(), 'listening_history.db');
+
+const db = new Database(dbPath);
+const db2 = new Database(historyDbPath);
+
+// Attach the second database to listening_history.db for cross-database queries
+db2.prepare(`ATTACH DATABASE '${dbPath.replace(/\\/g, '/')}' AS library_db`).run();
 
 // Create the table if it doesn't exist
 db.prepare(`
@@ -68,6 +76,13 @@ db.prepare(`
     artist TEXT,
     album TEXT,
     cover TEXT
+  )
+`).run();
+
+db2.prepare(`
+  CREATE TABLE IF NOT EXISTS listening_history (
+    track_url TEXT PRIMARY KEY,
+    plays INTEGER DEFAULT 0
   )
 `).run();
 
@@ -109,7 +124,7 @@ app.post('/upload', upload.array('songs'), async (req, res) => {
                 const uniqueHash = crypto.createHash('md5').update(file.originalname).digest('hex').substring(0, 12);
                 const imageName = `${path.parse(fileName).name}_${uniqueHash}.jpg`;
                 const imagePath = path.join(coversDir, imageName);
-                
+
                 await fsPromises.writeFile(imagePath, picture.data);
                 coverUrl = `/musicLibrary/covers/${imageName}`;
             }
@@ -131,14 +146,22 @@ app.post('/upload', upload.array('songs'), async (req, res) => {
             };
 
             // 7. Save to SQLite (Synchronous is fine here as it's very fast)
+            // 7. Save to SQLite (Preserves plays if the file is re-uploaded)
             const insert = db.prepare(`
-            INSERT OR REPLACE INTO tracks (url, title, artist, album, cover)
-            VALUES (@url, @title, @artist, @album, @cover)
-        `);
+    INSERT INTO tracks (url, title, artist, album, cover)
+    VALUES (@url, @title, @artist, @album, @cover)
+    ON CONFLICT(url) DO UPDATE SET
+        title=excluded.title,
+        artist=excluded.artist,
+        album=excluded.album,
+        cover=excluded.cover
+`)
             insert.run(trackData);
 
             results.push(trackData);
             console.log(`✔ Processed: ${fileName}`);
+
+
 
         } catch (error) {
             console.error(`X Error processing ${file.originalname}:`, error);
@@ -158,7 +181,7 @@ function getAllMusicFiles(dir) {
             if (item !== 'covers') { // Skip the covers folder
                 files = files.concat(getAllMusicFiles(fullPath));
             }
-        } else if (/\.(mp3|flac|wav|ogg|m4a|ACC|AIFF|mp4)$/i.test(item)) {
+        } else if (/\.(mp3|flac|wav|ogg|m4a|AAC|AIFF|mp4)$/i.test(item)) {
             files.push(fullPath);
         }
     }
@@ -170,6 +193,7 @@ app.get('/list-music', (req, res) => {
         // Fetch all tracks from the database
         const tracks = db.prepare('SELECT * FROM tracks').all();
         res.json({ tracks });
+
     } catch (err) {
         res.status(500).json({ error: "Database error" });
     }
@@ -177,11 +201,11 @@ app.get('/list-music', (req, res) => {
 
 async function syncLibrary() {
     console.log("Starting Library Sync...");
-    
+
     try {
         const dbTracks = db.prepare('SELECT url FROM tracks').all();
         const deleteStmt = db.prepare('DELETE FROM tracks WHERE url = ?');
-        
+
         for (const track of dbTracks) {
             const relativePath = track.url.replace('/musicLibrary/', '');
             const fullPath = path.join(musicDir, relativePath);
@@ -200,9 +224,14 @@ async function syncLibrary() {
 
     const selectStmt = db.prepare('SELECT url FROM tracks WHERE url = ?');
     const insertStmt = db.prepare(`
-        INSERT INTO tracks (url, title, artist, album, cover)
-        VALUES (?, ?, ?, ?, ?)
-    `);
+    INSERT INTO tracks (url, title, artist, album, cover)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(url) DO UPDATE SET
+        title=excluded.title,
+        artist=excluded.artist,
+        album=excluded.album,
+        cover=excluded.cover
+`);
 
     for (const fullPath of files) {
         const relPathUrl = `/musicLibrary/${path.relative(musicDir, fullPath).replace(/\\/g, '/')}`;
@@ -212,7 +241,7 @@ async function syncLibrary() {
             console.log(`New file found via sync: ${relPathUrl}. Parsing metadata...`);
             try {
                 const metadata = await mm.parseFile(fullPath);
-                
+
                 // Safe unique naming wrapper for sync covers
                 const picture = metadata.common.picture && metadata.common.picture[0];
                 let syncCoverUrl = '/musicLibrary/covers/default-cover.webp';
@@ -221,7 +250,7 @@ async function syncLibrary() {
                     const uniqueHash = crypto.createHash('md5').update(relPathUrl).digest('hex').substring(0, 12);
                     const syncCoverName = `${path.parse(fullPath).name}_${uniqueHash}.jpg`;
                     const imagePath = path.join(coversDir, syncCoverName);
-                    
+
                     // Actually write the image payload out to disk
                     await fsPromises.writeFile(imagePath, picture.data);
                     syncCoverUrl = `/musicLibrary/covers/${syncCoverName}`;
@@ -246,3 +275,104 @@ async function syncLibrary() {
 
 syncLibrary();
 
+/*------------------------------------
+2,statistics
+------------------------------------*/
+app.get('/api/stats', (req, res) => {
+    try {
+        // 1. Calculate active listening milestones by linking to the library for artist names
+        const listeningMetrics = db2.prepare(`
+    SELECT 
+        SUM(l.plays) as totalPlaysCount,
+        COUNT(DISTINCT t.artist) as uniqueArtistsListened
+    FROM listening_history l
+    LEFT JOIN library_db.tracks t ON l.track_url = t.url
+    WHERE l.plays > 0
+`).get();
+
+        // 2. FIXED: Changed 'FROM tracks' to 'FROM library_db.tracks'
+        const libraryTotals = db2.prepare(`
+            SELECT 
+                COUNT(*) as totalSongsInLibrary,
+                COUNT(DISTINCT artist) as totalArtistsInLibrary
+            FROM library_db.tracks
+        `).get();
+
+        // Send all metrics back to the client application
+        res.json({
+            totalPlaysCount: listeningMetrics.totalPlaysCount || 0,
+            uniqueArtistsListened: listeningMetrics.uniqueArtistsListened || 0,
+            totalSongsInLibrary: libraryTotals.totalSongsInLibrary || 0,
+            totalArtistsInLibrary: libraryTotals.totalArtistsInLibrary || 0
+        });
+    } catch (err) {
+        console.error("Failed to calculate stats payload:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/stats/top', (req, res) => {
+    try {
+        // Fetch top 10 most played individual track tracks
+        const topSongs = db2.prepare(`
+            SELECT 
+                t.title, 
+                t.artist, 
+                l.plays 
+            FROM listening_history l
+            JOIN library_db.tracks t ON LOWER(l.track_url) = LOWER(t.url)
+            ORDER BY l.plays DESC 
+            LIMIT 10
+        `).all();
+
+        // Calculate top artists by their combined track plays
+        const topArtists = db2.prepare(`
+            SELECT 
+                t.artist, 
+                SUM(l.plays) as totalPlays 
+            FROM listening_history l
+            JOIN library_db.tracks t ON LOWER(l.track_url) = LOWER(t.url)
+            GROUP BY t.artist 
+            ORDER BY totalPlays DESC 
+            LIMIT 10
+        `).all();
+
+        res.json({ topSongs, topArtists });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+app.post('/api/stats/listen', express.json(), (req, res) => {
+    let { url } = req.body;
+    if (!url) return res.status(400).send("URL parameter is missing");
+
+    try {
+        let targetUrl = decodeURIComponent(url);
+        if (!targetUrl.startsWith('/musicLibrary/')) {
+            targetUrl = '/musicLibrary/' + targetUrl.replace(/^\/+/, '');
+        }
+
+        // 1. FIXED: Changed 'FROM tracks' to 'FROM library_db.tracks'
+        const trackMetadata = db2.prepare('SELECT 1 FROM library_db.tracks WHERE LOWER(url) = LOWER(?)').get(targetUrl);
+
+        if (!trackMetadata) {
+            return res.status(404).send("Track file not found in library index catalog.");
+        }
+
+        // 2. Safely log the click occurrence (This is fine because listening_history lives in db2)
+        db2.prepare(`
+            INSERT INTO listening_history (track_url, plays)
+            VALUES (?, 1)
+            ON CONFLICT(track_url) DO UPDATE SET 
+                plays = plays + 1
+        `).run(targetUrl);
+
+        console.log(`[Metrics Captured] Increment recorded for track: ${targetUrl}`);
+        res.sendStatus(200);
+    } catch (err) {
+        console.error("Failed to update play counts:", err);
+        res.status(500).send(err.message);
+    }
+});
