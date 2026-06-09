@@ -214,6 +214,13 @@ body {
     gap: 10px;
 }
 
+.visualizer-label {
+    color: var(--text-main);
+    font-size: 14px;
+    font-weight:bolder;
+    font-family: 'Courier New', Courier, monospace;
+}
+
 /* @keyframes swoosh {
     0% {
         transform: rotateX(0);

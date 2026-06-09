@@ -933,21 +933,31 @@ function initVisualizer() {
 
         // Layer 1: Base frequencies (Pink/Red gradient, thick waves)
         // Arcs, Wave, Glob, Lines, Circles, Cubes, Flower, Shine, Square, Turntable are all elements
-         waveInstance.addAnimation(
-                    new waveInstance.animations.Arcs({
-                        lineColor: "white",
-                        lineWidth: 4,
-                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                        count: 60,
-                        rounded: true,
-                        diameter: 300, // Controls how large the center circle is
-                        frequencyBand: "base" // Focuses the arc reaction on the beat
-                    })
-                );
+        waveInstance.addAnimation(
+            new waveInstance.animations.Arcs({
+                lineColor: "white",
+                lineWidth: 4,
+                fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                count: 60,
+                rounded: true,
+                diameter: 300, // Controls how large the center circle is
+                frequencyBand: "base" // Focuses the arc reaction on the beat
+            })
+        );
 
         console.log("Multi-layered wave visualizer successfully attached.");
     }
 }
+
+const visSlider = document.getElementById('visSlider');
+const visNameDisplay = document.getElementById('visNameDisplay');
+let fadeTimeout;
+
+const modeNames = {
+    '1': 'Arcs', '2': 'Wave', '3': 'Glob',
+    '4': 'Lines', '5': 'Circles', '6': 'Cubes',
+    '7': 'Flower', '8': 'Shine', '9': 'Square'
+};
 
 function updateVisualizerType(typeIndex) {
     visualizerType = typeIndex;
@@ -955,6 +965,21 @@ function updateVisualizerType(typeIndex) {
         console.warn("Visualizer not initialized yet. Cannot change type.");
         return;
     } else {
+        // 1. Update text
+        visNameDisplay.textContent = `Mode: ${modeNames[visualizerType] || 'Unknown'}`;
+
+        // 2. Make it visible
+        visNameDisplay.style.opacity = '1';
+
+        // 3. Clear existing timer so we don't fade out while they are still sliding
+        clearTimeout(fadeTimeout);
+
+        // 4. Set a new timer to fade out after 1.5 seconds
+        fadeTimeout = setTimeout(() => {
+            visNameDisplay.style.opacity = '0';
+        }, 1500);
+
+        waveInstance.clearAnimations(); // Clear existing animations before applying new one
         switch (visualizerType) {
             case '1':
                 waveInstance.addAnimation(

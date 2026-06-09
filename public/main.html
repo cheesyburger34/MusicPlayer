@@ -91,8 +91,10 @@
         <button class="song-focus-btn" id="songFocusBtn" onclick="openSongFocus()">
             ^
         </button>
-        <div class="visualizer-slider" id="visualizerSlider">
+        <div class="visualizer-slider" id="visSlider">
+            <span class="visualizer-label">Visualizer:</span>
             <input type="range" min="1" max="9" step="1" oninput="updateVisualizerType(this.value)" value="1">
+            <span id="visNameDisplay" style="opacity: 0; transition: opacity 0.5s ease; color: var(--text-main);">Mode: Arcs</span>
         </div>
         <canvas id="visualizer"></canvas>
 
