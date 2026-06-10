@@ -938,7 +938,7 @@ function initVisualizer() {
                 lineColor: "white",
                 lineWidth: 4,
                 fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                count: 60,
+                count: 30,
                 rounded: true,
                 diameter: 300, // Controls how large the center circle is
                 frequencyBand: "base" // Focuses the arc reaction on the beat
@@ -956,7 +956,8 @@ let fadeTimeout;
 const modeNames = {
     '1': 'Arcs', '2': 'Wave', '3': 'Glob',
     '4': 'Lines', '5': 'Circles', '6': 'Cubes',
-    '7': 'Flower', '8': 'Shine', '9': 'Square'
+    '7': 'Flower', '8': 'Shine', '9': 'Square',
+    '10': 'Turntable'
 };
 
 function updateVisualizerType(typeIndex) {
@@ -966,7 +967,7 @@ function updateVisualizerType(typeIndex) {
         return;
     } else {
         // 1. Update text
-        visNameDisplay.textContent = `Mode: ${modeNames[visualizerType] || 'Unknown'}`;
+        visNameDisplay.textContent = `${modeNames[visualizerType] || 'Unknown'}`;
 
         // 2. Make it visible
         visNameDisplay.style.opacity = '1';
@@ -987,7 +988,7 @@ function updateVisualizerType(typeIndex) {
                         lineColor: "white",
                         lineWidth: 4,
                         fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                        count: 60,
+                        count: 30,
                         rounded: true,
                         diameter: 300, // Controls how large the center circle is
                         frequencyBand: "base" // Focuses the arc reaction on the beat
@@ -1001,8 +1002,7 @@ function updateVisualizerType(typeIndex) {
                         lineColor: "white",
                         lineWidth: 10,
                         fillColor: { gradient: ["#FBDA61", "#FF5ACD"] },
-                        mirroredX: true,
-                        count: 25,
+                        count: 50,
                         rounded: true,
                         frequencyBand: "highs"
                     })
@@ -1030,7 +1030,7 @@ function updateVisualizerType(typeIndex) {
                         lineWidth: 10,
                         fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
                         mirroredX: true,
-                        count: 60,
+                        count: 30,
                         rounded: true
                     })
                 );
@@ -1101,9 +1101,38 @@ function updateVisualizerType(typeIndex) {
                 );
                 console.log("Visualizer initialized with Square animation.");
                 break;
+            case '10':
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Turntable({
+                        lineColor: "white",
+                        lineWidth: 10,
+                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
+                        mirroredX: true,
+                        count: 60,
+                        rounded: true
+                    })
+                );
+                console.log("Visualizer initialized with Turntable animation.");
+                break;
             // Add cases for other visualizer types
         }
     }
+}
+
+// BUGGED NEEDS FIXING
+function updateSensitivity(value) {
+    const sensValueDisplay = document.getElementById('sensValue');
+
+    // Check your actual global variable
+    if (!waveInstance || !waveInstance.analyser) {
+        console.warn("Wave instance not initialized yet!");
+        return;
+    }
+
+    // Apply the change directly to the variable in your script
+    waveInstance.analyser.smoothingTimeConstant = 1.0 - value;
+
+    updateVisualizerType(visualizerType); // Reapply the current visualizer to update with new sensitivity
 }
 /*---------------------------------------------
 7. Statistics

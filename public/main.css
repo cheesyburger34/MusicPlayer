@@ -205,6 +205,12 @@ body {
     transform: translateY(100vh) rotateX(180deg);
 }
 
+.sens-value-display,
+.visualizer-name {
+    opacity: 0; 
+    transition: opacity 0.5s ease; 
+    color: var(--text-main);
+}
 .visualizer-slider {
     position: absolute;
     top: 10px;
@@ -212,8 +218,9 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    z-index: 10;
 }
-
+.sens-label,
 .visualizer-label {
     color: var(--text-main);
     font-size: 14px;
@@ -221,6 +228,16 @@ body {
     font-family: 'Courier New', Courier, monospace;
 }
 
+.sens-slider {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
+    margin-top: 3vh;
+}
 /* @keyframes swoosh {
     0% {
         transform: rotateX(0);
