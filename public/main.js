@@ -903,6 +903,7 @@ function openSongFocus() {
 
 // Declare the visualizer instance globally
 let waveInstance = null;
+let waveAnalyser = null;
 
 function initVisualizer() {
     const audioElement = document.querySelector("#main-audio-player");
@@ -930,6 +931,15 @@ function initVisualizer() {
 
         // The library handles all AudioContext routing internally here
         waveInstance = new Wave(audioElement, canvasElement);
+        waveAnalyser = waveInstance._audioAnalyser || null;
+
+        // If the analyser isn't ready until playback begins, attach once to the player
+        audioElement.addEventListener("play", () => {
+            waveAnalyser = waveInstance._audioAnalyser || waveAnalyser;
+            if (waveAnalyser) {
+                waveAnalyser.smoothingTimeConstant = 0.7;
+            }
+        }, { once: true });
 
         // Layer 1: Base frequencies (Pink/Red gradient, thick waves)
         // Arcs, Wave, Glob, Lines, Circles, Cubes, Flower, Shine, Square, Turntable are all elements
@@ -944,6 +954,7 @@ function initVisualizer() {
                 frequencyBand: "base" // Focuses the arc reaction on the beat
             })
         );
+
 
         console.log("Multi-layered wave visualizer successfully attached.");
     }
@@ -1000,14 +1011,47 @@ function updateVisualizerType(typeIndex) {
                 waveInstance.addAnimation(
                     new waveInstance.animations.Wave({
                         lineColor: "white",
-                        lineWidth: 10,
+                        lineWidth: 1,
                         fillColor: { gradient: ["#FBDA61", "#FF5ACD"] },
-                        count: 50,
+                        count: 15,
+                        rounded: true,
+                        frequencyBand: "base"
+                    })
+                );
+
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Wave({
+                        lineColor: "white",
+                        lineWidth: 1,
+                        fillColor: { gradient: ["#fba961", "#FF5ACD"] },
+                        count: 15,
+                        rounded: true,
+                        frequencyBand: "lows"
+                    })
+                );
+
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Wave({
+                        lineColor: "white",
+                        lineWidth: 1,
+                        fillColor: { gradient: ["#61d4fb", "#FF5ACD"] },
+                        count: 15,
+                        rounded: true,
+                        frequencyBand: "mids"
+                    })
+                );
+
+                waveInstance.addAnimation(
+                    new waveInstance.animations.Wave({
+                        lineColor: "white",
+                        lineWidth: 1,
+                        fillColor: { gradient: ["#70fb61", "#FF5ACD"] },
+                        count: 25,
                         rounded: true,
                         frequencyBand: "highs"
                     })
                 );
-                console.log("Visualizer initialized with Wave animation on high frequencies.");
+                console.log("Visualizer initialized with Wave animation on base frequencies.");
                 break;
             case '3':
                 waveInstance.addAnimation(
@@ -1119,20 +1163,28 @@ function updateVisualizerType(typeIndex) {
     }
 }
 
-// BUGGED NEEDS FIXING
-function updateSensitivity(value) {
-    const sensValueDisplay = document.getElementById('sensValue');
+function getWaveAnalyser() {
+    if (!waveInstance) return null;
+    return waveAnalyser || waveInstance._audioAnalyser || null;
+}
 
-    // Check your actual global variable
-    if (!waveInstance || !waveInstance.analyser) {
-        console.warn("Wave instance not initialized yet!");
+function updateSensitivity(value) {
+    const sensValueDisplay = document.getElementById('sensValueDisplay');
+    const analyser = getWaveAnalyser();
+
+    if (!analyser) {
+        console.warn("Wave analyser is not ready yet!");
         return;
     }
 
-    // Apply the change directly to the variable in your script
-    waveInstance.analyser.smoothingTimeConstant = 1.0 - value;
+    analyser.smoothingTimeConstant = 1.0 - value;
+    analyser.fftSize = 2048;
 
-    updateVisualizerType(visualizerType); // Reapply the current visualizer to update with new sensitivity
+    if (sensValueDisplay) {
+        sensValueDisplay.textContent = `${Math.round((1.0 - value) * 100)}%`;
+    }
+
+    updateVisualizerType(visualizerType);
 }
 /*---------------------------------------------
 7. Statistics
