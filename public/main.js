@@ -679,8 +679,21 @@ window.addEventListener('load', () => {
     });
 
     if (albumArt) {
+        let albumArtClickTimer = null;
+        const doubleClickDelay = 280;
+
         albumArt.addEventListener('click', () => {
-            togglePlayback();
+            if (albumArtClickTimer) {
+                clearTimeout(albumArtClickTimer);
+                albumArtClickTimer = null;
+                playNextTrack();
+                return;
+            }
+
+            albumArtClickTimer = setTimeout(() => {
+                togglePlayback();
+                albumArtClickTimer = null;
+            }, doubleClickDelay);
         });
     }
 });
