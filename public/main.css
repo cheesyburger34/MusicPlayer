@@ -418,7 +418,7 @@ body.song-focus-active :is(.left-nav, .btm-player, .top-nav, .content) {
     stroke-width: 0.9px;
     paint-order: stroke;
     text-shadow: 0 0 10px rgba(0, 0, 0, 0.55);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Cinzel', serif;
     font-size: 14px;
     letter-spacing: 1.4px;
     text-transform: uppercase;
