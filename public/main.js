@@ -8,11 +8,15 @@ const stackOffset = 20;
 
 let audioFiles = [];
 let lastVisitedPageId = null;
+const contentPageTransitionDuration = 500;
+const contentPageExitTimers = new WeakMap();
+let pendingContentPageEntranceTimer = null;
+let pendingContentPage = null;
 
 /**
  * Initializes or resets the visual stack layout
  */
-function updateStack() {
+function resetNavigationStackLayout() {
     const items = Array.from(navContainer.querySelectorAll('.nav-item'));
     const baseHeight = items[0]?.offsetHeight || 140;
 
@@ -27,41 +31,28 @@ function updateStack() {
 /**
  * Handles logic for switching active items and updating stack visuals
  */
-function activateItem(clickedItem) {
+function activateNavigationItem(clickedItem) {
     const items = Array.from(navContainer.querySelectorAll('.nav-item'));
-
-    const albumPage = document.getElementById('albumPage');
-    if (albumPage && albumPage.classList.contains('active')) {
-        albumPage.classList.remove('active');
-        albumPage.classList.add('exit');
-        setTimeout(() => {
-            albumPage.classList.remove('exit');
-            albumPage.style.display = 'none';
-        }, 100);
-    }
+    const currentPage = document.querySelector('.page-content.active, .page-content.exit');
 
     // Reset active states for all navigation items and content pages
     items.forEach(item => item.classList.remove('active'));
-    pageContents.forEach(page => page.classList.remove('active'));
 
-    // Activate the clicked item and its linked content page
+    // Activate the clicked item and transition to its linked content page.
     clickedItem.classList.add('active');
     const pageId = clickedItem.dataset.page;
     const targetPage = document.getElementById(pageId);
-    if (targetPage) targetPage.classList.add('active');
 
     if (pageId === 'statsPage') {
         if (typeof updateStatsPage === 'function') {
             updateStatsPage();
         }
-        if (typeof buildStatsLeaderboards === 'function') {
-            buildStatsLeaderboards();
+        if (typeof renderStatsLeaderboards === 'function') {
+            renderStatsLeaderboards();
         }
     }
 
-    const currentPage = document.querySelector('.page-content.active');
-    const nextPage = targetPage;
-    if (currentPage) {
+    if (currentPage && currentPage !== targetPage) {
         lastVisitedPageId = currentPage.id;
     }
 
@@ -86,40 +77,24 @@ function activateItem(clickedItem) {
         }
     });
 
-    // Curved  Logic
-    if (currentPage) {
-        currentPage.classList.remove('active');
-        currentPage.classList.add('exit');
-
-        // Cleanup after animation finishes
-        setTimeout(() => {
-            currentPage.classList.remove('exit');
-        }, 100);
-    }
-
-    if (nextPage) {
-        // Delay a tiny bit to let the exit animation start for a layered look
-        setTimeout(() => {
-            nextPage.classList.add('active');
-        }, 50);
-    }
+    if (targetPage) transitionToContentPage(targetPage, currentPage);
 }
 
 // Attach click listeners to all navigation items
 document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', event => {
         event.preventDefault();
-        activateItem(event.currentTarget);
+        activateNavigationItem(event.currentTarget);
     });
 });
 
 // Refresh stack calculations on page load
 window.addEventListener('load', () => {
-    updateStack();
+    resetNavigationStackLayout();
     // Set default active item to library
     const libraryItem = document.querySelector('[data-page="library"]');
     if (libraryItem) {
-        activateItem(libraryItem);
+        activateNavigationItem(libraryItem);
     } else {
         // Apply default styling if no library item found
         const items = Array.from(navContainer.querySelectorAll('.nav-item'));
@@ -146,14 +121,14 @@ window.addEventListener('load', () => {
  * 1. THE AUTO-LOADER
  * This runs as soon as the page opens to fetch existing music from your folder.
  */
-async function loadExistingMusic() {
+async function loadMusicLibrary() {
     try {
         const response = await fetch('http://localhost:3000/list-music');
         if (response.ok) {
             const data = await response.json();
             if (data.tracks) {
                 audioFiles = data.tracks;
-                displayMusic(data.tracks);
+                renderMusicLibrary(data.tracks);
             }
         }
     } catch (err) {
@@ -165,7 +140,7 @@ async function loadExistingMusic() {
  * 2. THE UPLOAD HANDLER
  * Handles picking files and sending them to your Multer server.
  */
-async function addMusic() {
+async function uploadMusicFiles() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = 'audio/*';
@@ -191,9 +166,9 @@ async function addMusic() {
                 // to prevent rapid UI rewrites from stomping on each other.
                 if (typeof audioFiles !== 'undefined') {
                     audioFiles = [...audioFiles, ...data.tracks];
-                    displayMusic(audioFiles); // Re-display the entire updated list
+                    renderMusicLibrary(audioFiles); // Re-display the entire updated list
                 } else {
-                    displayMusic(data.tracks);
+                    renderMusicLibrary(data.tracks);
                 }
 
                 console.log('Upload complete for batch!');
@@ -215,7 +190,7 @@ async function addMusic() {
  * Turns the server's data into HTML elements.
  */
 
-function displayMusic(tracks) {
+function renderMusicLibrary(tracks) {
     const libraryGrid = document.getElementById('library-grid');
     const artistList = document.getElementById('artist-list');
 
@@ -252,7 +227,7 @@ function displayMusic(tracks) {
                 <span class="track-count">${albumTracks.length} Tracks</span>
             </div>
         `;
-        card.onclick = () => switchToAlbumPage(albumName, albumTracks);
+        card.onclick = () => showAlbumDetails(albumName, albumTracks);
         libraryGrid.appendChild(card);
     }
 
@@ -264,7 +239,7 @@ function displayMusic(tracks) {
         const artistTitle = document.createElement('h2');
         artistTitle.className = 'artist-name artist-title-clickable';
         artistTitle.textContent = artist;
-        artistTitle.onclick = () => switchToArtistPage(artist, artistMap[artist]);
+        artistTitle.onclick = () => showArtistDetails(artist, artistMap[artist]);
 
         const scrollContainer = document.createElement('div');
         scrollContainer.className = `artist-scroll ${artist.replace(/\s+/g, '-')}`;
@@ -286,7 +261,7 @@ function displayMusic(tracks) {
         artistList.appendChild(artistSection);
     }
 }
-function switchToArtistPage(artistName, tracks) {
+function showArtistDetails(artistName, tracks) {
     const nextPage = document.getElementById('albumPage');
     if (!nextPage) return;
 
@@ -294,7 +269,8 @@ function switchToArtistPage(artistName, tracks) {
 
     nextPage.innerHTML = `
         <header class="content-header">
-            <button class="back-button" onclick="goBackTopage()">Back</button>
+            <button class="back-button" onclick="returnToPreviousPage()">Back</button>
+            <span class="content-kicker">Artist collection</span>
             <div class="album-header">
                 <img src="${firstTrack.cover}" class="album-page-cover" alt="${artistName}">
                 <div class="artist-header-info">
@@ -317,7 +293,7 @@ function switchToArtistPage(artistName, tracks) {
                         <p class="track-subtext">${track.album || ''}</p>
                     </div>
                 </div>
-                <button class="add-to-queue-btn" onclick="addToQueue(${trackData})">
+                <button class="add-to-queue-btn" onclick="addTrackToQueue(${trackData})">
                     +
                 </button>
             </div>
@@ -326,17 +302,18 @@ function switchToArtistPage(artistName, tracks) {
 </div>
 `;
 
-    triggerPageTransition(nextPage);
+    transitionToContentPage(nextPage);
 }
 
-function switchToAlbumPage(albumName, tracks) {
+function showAlbumDetails(albumName, tracks) {
     const nextPage = document.getElementById('albumPage');
     if (!nextPage) return;
 
     const firstTrack = tracks[0];
     nextPage.innerHTML = `
         <header class="content-header">
-            <button class="back-button" onclick="goBackTopage()">Back</button>
+            <button class="back-button" onclick="returnToPreviousPage()">Back</button>
+            <span class="content-kicker">Album playback</span>
             <div class="album-header">
                 <img src="${firstTrack.cover}" class="album-page-cover" alt="${albumName}">
                 <div class="artist-header-info">
@@ -355,10 +332,10 @@ function switchToAlbumPage(albumName, tracks) {
                 <div class="track-clickable-area" onclick="playTrack('${track.url}', ${listData})">
                     <span class="track-number">${index + 1}</span>
                     <div class="track-details">
-                        <strong>${track.title}</strong>
+                        <strong class="track-title">${track.title}</strong>
                     </div>
                 </div>
-                <button class="add-to-queue-btn" onclick="addToQueue(${trackData})">
+                <button class="add-to-queue-btn" onclick="addTrackToQueue(${trackData})">
                     +
                 </button>
             </div>
@@ -367,33 +344,58 @@ function switchToAlbumPage(albumName, tracks) {
 </div>
 `;
 
-    triggerPageTransition(nextPage);
+    transitionToContentPage(nextPage);
 }
 
 // Reusable transition logic to keep functions clean
-function triggerPageTransition(nextPage) {
-    const currentPage = document.querySelector('.page-content.active');
+function transitionToContentPage(nextPage, currentPage = document.querySelector('.page-content.active, .page-content.exit')) {
+    if (!nextPage || currentPage === nextPage) return;
 
-    if (currentPage && currentPage !== nextPage) {
+    clearTimeout(pendingContentPageEntranceTimer);
+    if (pendingContentPage && pendingContentPage !== nextPage) {
+        pendingContentPage.classList.remove('active');
+        pendingContentPage.style.display = 'none';
+    }
+    pendingContentPage = nextPage;
+
+    const enterNextPage = () => {
+        clearTimeout(contentPageExitTimers.get(nextPage));
+        contentPageExitTimers.delete(nextPage);
+        nextPage.style.display = 'block';
+        nextPage.classList.remove('exit');
+        requestAnimationFrame(() => nextPage.classList.add('active'));
+        pendingContentPage = null;
+        pendingContentPageEntranceTimer = null;
+    };
+
+    if (currentPage) {
         currentPage.classList.remove('active');
         currentPage.classList.add('exit');
-        setTimeout(() => currentPage.classList.remove('exit'), 100);
+        const exitTimer = setTimeout(() => {
+            currentPage.classList.remove('exit');
+            currentPage.style.display = 'none';
+            contentPageExitTimers.delete(currentPage);
+        }, contentPageTransitionDuration);
+        contentPageExitTimers.set(currentPage, exitTimer);
+
+        // Complete the outgoing cycle before bringing the next page in.
+        pendingContentPageEntranceTimer = setTimeout(enterNextPage, contentPageTransitionDuration);
+        return;
     }
 
-    nextPage.style.display = 'block';
-    setTimeout(() => nextPage.classList.add('active'), 50);
+    enterNextPage();
 }
 
 
 
 
-function goBackTopage() {
+function returnToPreviousPage() {
     const targetItem = document.querySelector(`[data-page="${lastVisitedPageId}"]`);
     if (targetItem) {
-        activateItem(targetItem);
+        activateNavigationItem(targetItem);
     } else {
         const libraryItem = document.querySelector('[data-page="library"]');
-        if (libraryItem) activateItem(libraryItem);
+        if (libraryItem) activateNavigationItem(libraryItem);
     }
 }
 
@@ -413,14 +415,14 @@ let dragSrcIndex = null;
 // const visualizerType = document.getElementById('visualizerSlider')?.value || '1';
 
 function playTrack(url, allTracksInContext = []) {
-    stopMusic();
+    pausePlayback();
 
-    // 1. Update the Auto-Queue Context
+    // Preserve the album or artist list so playback can continue after the manual queue empties.
     if (allTracksInContext.length > 0) {
         contextQueue = allTracksInContext;
     }
 
-    // 2. Resolve Track Metadata across all sources cleanly
+    // Resolve metadata in playback-priority order before falling back to the full library.
     let trackMetadata = null;
     if (contextQueue && contextQueue.length > 0) {
         trackMetadata = contextQueue.find(t => t.url === url);
@@ -434,8 +436,9 @@ function playTrack(url, allTracksInContext = []) {
 
     // Assign metadata securely to keep the UI from displaying "Unknown Track"
     currentTrack = trackMetadata || { url: url, title: "Unknown Track", name: "Unknown Track" };
+    updateFocusAlbumDisplay(visualizerType);
 
-    // 3. Track Index Management
+    // Keep the context index aligned when playback begins from an album or artist page.
     if (contextQueue && contextQueue.length > 0) {
         const index = contextQueue.findIndex(track => track.url === url);
         if (index !== -1) {
@@ -452,6 +455,7 @@ function playTrack(url, allTracksInContext = []) {
     const slider = document.querySelector('.volume-slider');
     if (slider) {
         const sliderVal = parseFloat(slider.value);
+        // Human hearing perceives volume logarithmically, so we apply a curve to the slider input
         currentSong.volume = (Math.pow(10, sliderVal / 100) - 1) / 9;
     }
 
@@ -471,7 +475,7 @@ function playTrack(url, allTracksInContext = []) {
             })
                 .catch(err => console.error('Stats error:', err));
         }
-        playNext();
+        playNextTrack();
     };
 
     currentSong.play()
@@ -485,17 +489,18 @@ function playTrack(url, allTracksInContext = []) {
             if (playPauseBtn) playPauseBtn.innerHTML = '<span>▶</span>';
         });
 
-    updateSongInfo(currentSong);
+    updateNowPlayingDisplay(currentSong);
+    updateFocusAlbumDisplay(visualizerType);
 
     // Refresh UI
     if (document.getElementById('queuePanel')?.classList.contains('open')) {
-        openQueuePage();
+        renderAndOpenQueuePanel();
     }
 
-    initVisualizer();
+    initializeVisualizer();
 }
 
-function playNext() {
+function playNextTrack() {
     // 1: Manual User Queue has items remaining
     if (userQueue && userQueue.length > 0) {
         const nextTrack = userQueue.shift();
@@ -516,34 +521,34 @@ function playNext() {
             playTrack(nextTrack.url);
         } else {
             console.log("Context queue reached the end after user queue cleared.");
-            stopMusic();
+            pausePlayback();
         }
     }
     // Out of options entirely
     else {
         console.log("Queue finished. No tracks remaining in user or context queues.");
-        stopMusic();
+        pausePlayback();
     }
 }
 
-function addToQueue(track) {
+function addTrackToQueue(track) {
     userQueue.push(track);
     console.log(`Added ${track.title || track.name || 'Track'} to manual user queue`);
 
     const queuePanel = document.getElementById('queuePanel');
     if (queuePanel && queuePanel.classList.contains('open')) {
-        openQueuePage();
+        renderAndOpenQueuePanel();
     }
 }
 
-function stopMusic() {
+function pausePlayback() {
     if (currentSong && !currentSong.paused) {
         currentSong.pause();
         // Remove currentSong = null; so the object stays alive for the visualizer
     }
 }
 
-function switchMusicState(btn) {
+function togglePlayback(btn) {
     if (!btn) {
         btn = document.getElementById('playPauseBtn');
     }
@@ -552,7 +557,7 @@ function switchMusicState(btn) {
 
     if (userQueue && userQueue.length > 0) {
         console.log("Manual queue has pending tracks. Playing next in queue.");
-        playNext();
+        playNextTrack();
         return;
     }
 
@@ -571,7 +576,7 @@ function switchMusicState(btn) {
     }
 }
 
-const updateSongInfo = (currentSong) => {
+const updateNowPlayingDisplay = (currentSong) => {
     if (!currentSong || !currentSong.src) return;
 
     const browserSrc = decodeURIComponent(currentSong.src).toLowerCase();
@@ -595,13 +600,13 @@ const updateSongInfo = (currentSong) => {
         finalArtist = 'Unknown Artist';
     }
 
-    const handleMarquee = (trackElement, text) => {
+    const updateMarqueeText = (trackElement, text) => {
         if (!trackElement) return;
 
         const spans = trackElement.querySelectorAll('span');
         if (spans.length < 2) return;
 
-        // 1. Reset everything to calculate static width accurately
+        // Measure static text first; duplicating it before measuring would falsely report overflow.
         trackElement.classList.remove('scroll-active');
         spans[0].style.animationDuration = '';
         spans[1].style.animationDuration = '';
@@ -612,11 +617,11 @@ const updateSongInfo = (currentSong) => {
         const container = trackElement.closest('.now-playing');
         if (!container) return;
 
-        // 2. Check if the text actually overflows
+        // Duplicate overflowing text so the CSS animation loops without a visible gap.
         if (spans[0].scrollWidth > container.clientWidth) {
             spans[1].textContent = text;
 
-            // 3. Speed Calculation
+            // Keep marquee movement at a consistent visual speed regardless of text length.
             const pixelsPerSecond = 40;
             const dynamicDuration = spans[0].scrollWidth / pixelsPerSecond;
 
@@ -632,24 +637,25 @@ const updateSongInfo = (currentSong) => {
 
     // Run the handler with verified text strings on both player instances
     if (track) {
-        handleMarquee(trackTitleTrack, track.title || 'Unknown Track');
-        handleMarquee(artistNameTrack, track.artist || 'Unknown Artist');
-        handleMarquee(trackTitleTrackFocus, track.title || 'Unknown Track');
-        handleMarquee(artistNameTrackFocus, track.artist || 'Unknown Artist');
+        updateMarqueeText(trackTitleTrack, track.title || 'Unknown Track');
+        updateMarqueeText(artistNameTrack, track.artist || 'Unknown Artist');
+        updateMarqueeText(trackTitleTrackFocus, track.title || 'Unknown Track');
+        updateMarqueeText(artistNameTrackFocus, track.artist || 'Unknown Artist');
     } else {
-        handleMarquee(trackTitleTrack, finalTitle);
-        handleMarquee(artistNameTrack, finalArtist);
-        handleMarquee(trackTitleTrackFocus, finalTitle);
-        handleMarquee(artistNameTrackFocus, finalArtist);
+        updateMarqueeText(trackTitleTrack, finalTitle);
+        updateMarqueeText(artistNameTrack, finalArtist);
+        updateMarqueeText(trackTitleTrackFocus, finalTitle);
+        updateMarqueeText(artistNameTrackFocus, finalArtist);
     }
 };
 
 
 window.addEventListener('load', () => {
-    const volumeSlider = document.querySelector('.volume-slider');
-    const volumeLabel = document.querySelector('.volume-label');
+    const volumeSliders = document.querySelectorAll('.volume-slider');
+    const volumeLabels = document.querySelectorAll('.volume-label');
+    const albumArt = document.querySelector('.album-art');
 
-    if (volumeSlider) {
+    volumeSliders.forEach(volumeSlider => {
         volumeSlider.addEventListener('input', (e) => {
             const sliderVal = parseFloat(e.target.value);
 
@@ -661,23 +667,32 @@ window.addEventListener('load', () => {
                 currentSong.volume = logVolume;
             }
 
-            if (volumeLabel) {
+            volumeSliders.forEach(slider => {
+                slider.value = sliderVal;
+            });
+            volumeLabels.forEach(volumeLabel => {
                 volumeLabel.textContent = Math.round(sliderVal) + '%';
-            }
+            });
 
             console.log(`Slider: ${sliderVal} | Perceived Volume: ${logVolume.toFixed(2)}`);
+        });
+    });
+
+    if (albumArt) {
+        albumArt.addEventListener('click', () => {
+            togglePlayback();
         });
     }
 });
 
 // Call the auto-loader when the script runs
-loadExistingMusic();
+loadMusicLibrary();
 
 
 /*---------------------------------------------
     5. THE SEARCHER
 ---------------------------------------------*/
-function handleSearchInput() {
+function handleLibrarySearchInput() {
     const searchInput = document.getElementById('searchInput');
     const searchForm = document.getElementById('searchForm');
     const topNav = document.getElementById('topNav');
@@ -716,7 +731,7 @@ function handleSearchInput() {
                                                             <span class="search-item-text" onclick="playTrack('${track.url}')">
                                                                 ${track.artist} - ${track.title}
                                                             </span>
-                                                            <button class="add-to-queue-btn" onclick="addToQueue(${trackData})">
+                                                            <button class="add-to-queue-btn" onclick="addTrackToQueue(${trackData})">
                                                             +
                                                             </button>
                                                          </div>`;
@@ -745,14 +760,14 @@ document.getElementById('searchOverlay').addEventListener('click', () => {
     topNav.classList.remove('search-active');
 });
 
-function showErrorPopup(message) {
+function showErrorAlert(message) {
     alert(`Error: ${message}`);
 }
 
 /*---------------------------------------------
     6. THE QUEUE
 ---------------------------------------------*/
-function openQueuePage() {
+function renderAndOpenQueuePanel() {
 
 
     // Create or retrieve the right-side queue panel
@@ -766,7 +781,7 @@ function openQueuePage() {
     }
 
     // Build queue HTML
-    let queueHTML = '<div class="queue-header"><h2>Queue</h2><button class="close-queue-btn" onclick="closeQueuePage()">×</button></div>';
+    let queueHTML = '<div class="queue-header"><h2>Queue</h2><button class="close-queue-btn" onclick="closeQueuePanel()">×</button></div>';
     queueHTML += '<div class="queue-content">';
 
     // Display current song title using track metadata when available
@@ -793,6 +808,7 @@ function openQueuePage() {
     if (contextQueue && contextQueue.length > 0) {
         let hasContextItems = false;
         let contextHTML = '';
+        // A manually queued song may not exist in contextQueue, so retain currentTrackIndex as fallback.
         const currentContextIndexRaw = currentTrack ? contextQueue.findIndex(song => song.url === currentTrack.url) : -1;
         const currentContextIndex = currentContextIndexRaw >= 0 ? currentContextIndexRaw : currentTrackIndex;
 
@@ -837,7 +853,7 @@ function openQueuePage() {
             const index = parseInt(e.target.dataset.index, 10);
             if (!isNaN(index)) {
                 userQueue.splice(index, 1);
-                openQueuePage(); // Refresh the queue display
+                renderAndOpenQueuePanel(); // Refresh the queue display
             }
         });
     });
@@ -876,13 +892,13 @@ function openQueuePage() {
             if (!isNaN(sourceIndex) && !isNaN(destIndex) && sourceIndex !== destIndex) {
                 const [movedItem] = userQueue.splice(sourceIndex, 1);
                 userQueue.splice(destIndex, 0, movedItem);
-                openQueuePage();
+                renderAndOpenQueuePanel();
             }
         });
     });
 }
 
-function closeQueuePage() {
+function closeQueuePanel() {
     console.log("Closing queue panel");
     const queuePanel = document.getElementById('queuePanel');
     if (queuePanel) {
@@ -890,25 +906,200 @@ function closeQueuePage() {
     }
 }
 
-function openSongFocus() {
+let songFocusTransitionTimer = null;
+
+function toggleSongFocusPage() {
     const songFocusBtn = document.getElementById('songFocusBtn');
     const songFocusPage = document.getElementById('songFocusPage');
 
     if (!songFocusBtn || !songFocusPage) return;
 
-    // Toggle both classes together cleanly without conditional blocks
-    songFocusBtn.classList.toggle('active');
-    songFocusPage.classList.toggle('active');
+    clearTimeout(songFocusTransitionTimer);
+    const isOpening = !document.body.classList.contains('song-focus-staging');
+    songFocusBtn.classList.toggle('active', isOpening);
+
+    if (isOpening) {
+        // Stage one: remove the surrounding app chrome and let content fill its space.
+        document.body.classList.add('song-focus-staging');
+        setVisualizerMode(visualizerType);
+
+        // Stage two: fade the focus page forward after the layout transition completes.
+        songFocusTransitionTimer = setTimeout(() => {
+            songFocusPage.classList.add('active');
+            document.body.classList.add('song-focus-active');
+        }, 500);
+    } else {
+        // Reverse stage two first, revealing the expanded main content behind focus.
+        songFocusPage.classList.remove('active');
+        document.body.classList.remove('song-focus-active');
+
+        // Restore navigation only after the focus page finishes fading away.
+        songFocusTransitionTimer = setTimeout(() => {
+            document.body.classList.remove('song-focus-staging');
+            songFocusPage.classList.remove(
+                'visualizer-mode-1', 'visualizer-mode-2', 'visualizer-mode-3',
+                'visualizer-mode-4', 'visualizer-mode-5', 'visualizer-mode-6',
+                'visualizer-mode-7', 'visualizer-mode-8', 'visualizer-mode-9'
+            );
+            songFocusPage.style.background = '';
+        }, 500);
+    }
 }
+
+function toggleControlVisibilityMenu() {
+    const picker = document.querySelector('.control-visibility-picker');
+    const button = picker?.querySelector('.control-visibility-btn');
+    if (!picker || !button) return;
+
+    const isOpen = picker.classList.toggle('open');
+    button.setAttribute('aria-expanded', String(isOpen));
+}
+
+document.querySelectorAll('[data-control-target]').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+        const control = document.getElementById(checkbox.dataset.controlTarget);
+        control?.classList.toggle('song-focus-control-hidden', !checkbox.checked);
+    });
+});
+
+document.addEventListener('click', event => {
+    const picker = document.querySelector('.control-visibility-picker');
+    if (!picker || picker.contains(event.target)) return;
+
+    picker.classList.remove('open');
+    picker.querySelector('.control-visibility-btn')?.setAttribute('aria-expanded', 'false');
+});
 
 // Declare the visualizer instance globally
 let waveInstance = null;
 let waveAnalyser = null;
+let visualizerType = '1';
+let visualizerResizeTimer = null;
+let visualizerPixelRatio = 1;
+let visualizerGain = 1;
+let visualizerScale = 1;
+const maxVisualizerPixelRatio = 2;
 
-function initVisualizer() {
+// SVG text is measured in the 220x220 viewBox, not CSS pixels.
+const albumTextMinFontSize = 8;
+const albumTextMaxFontSize = 16;
+const albumTextMaxArcWidth = 245;
+
+function configureWaveAnalyser() {
+    // Wave exposes no public analyser getter, so all private-field access stays in one helper.
+    const analyser = getWaveAnalyserNode();
+    if (!analyser) return;
+
+    analyser.smoothingTimeConstant = 0.7;
+    analyser.fftSize = 2048;
+    analyser.minDecibels = -80;
+    analyser.maxDecibels = -5;
+
+    if (!analyser.highDensityOutputEnabled) {
+        const readFrequencyData = analyser.getByteFrequencyData.bind(analyser);
+        analyser.getByteFrequencyData = frequencyData => {
+            readFrequencyData(frequencyData);
+
+            // Wave treats analyser values as pixels; compensate when the backing canvas is downscaled.
+            for (let index = 0; index < frequencyData.length; index++) {
+                frequencyData[index] = Math.min(
+                    255,
+                    frequencyData[index] * visualizerPixelRatio * visualizerGain
+                );
+            }
+        };
+        analyser.highDensityOutputEnabled = true;
+    }
+}
+
+function fitAlbumTextToArc(textPath) {
+    if (!textPath || !textPath.textContent) return;
+
+    // Binary search finds the largest fitting size without stepping through every fraction.
+    let low = albumTextMinFontSize;
+    let high = albumTextMaxFontSize;
+
+    while (high - low > 0.25) {
+        const candidate = (low + high) / 2;
+        textPath.style.fontSize = `${candidate}px`;
+
+        if (textPath.getComputedTextLength() <= albumTextMaxArcWidth) {
+            low = candidate;
+        } else {
+            high = candidate;
+        }
+    }
+
+    textPath.style.fontSize = `${low.toFixed(2)}px`;
+}
+
+function fitAlbumTextLabels() {
+    fitAlbumTextToArc(document.getElementById('albumTitleText'));
+    fitAlbumTextToArc(document.getElementById('albumArtistText'));
+}
+
+function updateFocusAlbumDisplay(modeIndex) {
+    const albumArt = document.querySelector('.album-art');
+    const albumTitleText = document.getElementById('albumTitleText');
+    const albumArtistText = document.getElementById('albumArtistText');
+
+    if (!albumArt) return;
+
+    albumArt.classList.remove('hidden');
+    const title = (currentTrack && currentTrack.title) ? currentTrack.title : 'Unknown Track';
+    const artist = (currentTrack && currentTrack.artist) ? currentTrack.artist : 'Unknown Artist';
+
+    if (currentTrack && currentTrack.cover) {
+        albumArt.style.backgroundImage = `url('${currentTrack.cover}')`;
+    } else {
+        albumArt.style.backgroundImage = 'linear-gradient(135deg, rgba(107, 74, 255, 0.8), rgba(255, 124, 201, 0.6))';
+    }
+
+    if (albumTitleText) {
+        albumTitleText.textContent = title;
+    }
+    if (albumArtistText) {
+        albumArtistText.textContent = artist;
+    }
+
+    fitAlbumTextLabels();
+}
+
+function getVisualizerDisplaySize(canvasElement) {
+    const bounds = canvasElement.getBoundingClientRect();
+    return {
+        width: Math.round(bounds.width || window.innerWidth),
+        height: Math.round(bounds.height || window.innerHeight)
+    };
+}
+
+function resizeVisualizerCanvas() {
+    const canvasElement = document.querySelector("#visualizer");
+    if (!canvasElement) return;
+
+    const { width, height } = getVisualizerDisplaySize(canvasElement);
+    visualizerPixelRatio = Math.min(window.devicePixelRatio || 1, maxVisualizerPixelRatio);
+    canvasElement.width = Math.round(width * visualizerPixelRatio);
+    canvasElement.height = Math.round(height * visualizerPixelRatio);
+
+    if (waveInstance && typeof waveInstance.resize === 'function') {
+        waveInstance.resize();
+    }
+}
+
+window.addEventListener('resize', () => {
+    if (visualizerResizeTimer) {
+        clearTimeout(visualizerResizeTimer);
+    }
+    visualizerResizeTimer = setTimeout(() => {
+        resizeVisualizerCanvas();
+    }, 120);
+});
+
+function initializeVisualizer() {
     const audioElement = document.querySelector("#main-audio-player");
     const canvasElement = document.querySelector("#visualizer");
-    // 0 = Arcs, 1 = Lines, 2 = Wave, 3 = Glob, 4 = Circles, 5 = Cubes, 6 = Flower, 7 = Shine, 8 = Square, 9 = Turntable
+    // 1 = Arcs, 2 = Lines, 3 = Wave, 4 = Glob, 5 = Circles, 6 = Flower, 7 = Shine, 8 = Square, 9 = Turntable
 
     // NEW: Let's log exactly what the script sees
     console.log("1. Audio Element found?", !!audioElement);
@@ -926,34 +1117,23 @@ function initVisualizer() {
     // FIX 2: Initialize Wave only once, passing the raw audio element
     if (!waveInstance) {
         // Adjust internal canvas resolution to match screen cleanly
-        canvasElement.width = window.innerWidth;
-        canvasElement.height = window.innerHeight;
+        resizeVisualizerCanvas();
 
-        // The library handles all AudioContext routing internally here
+        // Wave creates its analyser only after browser playback permission is granted.
         waveInstance = new Wave(audioElement, canvasElement);
         waveAnalyser = waveInstance._audioAnalyser || null;
 
-        // If the analyser isn't ready until playback begins, attach once to the player
+        // Capture Wave's private analyser after its one-time play listener creates it.
         audioElement.addEventListener("play", () => {
             waveAnalyser = waveInstance._audioAnalyser || waveAnalyser;
-            if (waveAnalyser) {
-                waveAnalyser.smoothingTimeConstant = 0.7;
-            }
+            configureWaveAnalyser();
         }, { once: true });
 
-        // Layer 1: Base frequencies (Pink/Red gradient, thick waves)
-        // Arcs, Wave, Glob, Lines, Circles, Cubes, Flower, Shine, Square, Turntable are all elements
-        waveInstance.addAnimation(
-            new waveInstance.animations.Arcs({
-                lineColor: "white",
-                lineWidth: 4,
-                fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                count: 30,
-                rounded: true,
-                diameter: 300, // Controls how large the center circle is
-                frequencyBand: "base" // Focuses the arc reaction on the beat
-            })
-        );
+        // Set defaults now if the analyser is already available
+        configureWaveAnalyser();
+
+        // Arcs, Wave, Glob, Lines, Circles, Flower, Shine, Square, Turntable are all elements (Cubes is buggy so we're not gonna use it)
+        setVisualizerMode(visualizerType);
 
 
         console.log("Multi-layered wave visualizer successfully attached.");
@@ -966,13 +1146,171 @@ let fadeTimeout;
 
 const modeNames = {
     '1': 'Arcs', '2': 'Wave', '3': 'Glob',
-    '4': 'Lines', '5': 'Circles', '6': 'Cubes',
-    '7': 'Flower', '8': 'Shine', '9': 'Square',
-    '10': 'Turntable'
+    '4': 'Lines', '5': 'Circles', '6': 'Flower',
+    '7': 'Shine', '8': 'Square', '9': 'Turntable'
 };
 
-function updateVisualizerType(typeIndex) {
+const maxFrequencyBandDetail = {
+    base: 16,
+    lows: 16
+};
+
+function addVisualizerLayers(animationName, layers) {
+    layers.forEach(layer => {
+        // Narrow low-frequency bands need fewer shapes so adjacent shapes read distinct bins.
+        const maxCount = maxFrequencyBandDetail[layer.frequencyBand];
+        const normalizedLayer = maxCount && layer.count > maxCount
+            ? { ...layer, count: maxCount }
+            : { ...layer };
+
+        // Keep geometry crisp at the backing resolution; visual scale is applied during drawing.
+        ['lineWidth', 'diameter', 'gap', 'cubeHeight'].forEach(option => {
+            if (typeof normalizedLayer[option] === 'number') {
+                normalizedLayer[option] *= visualizerPixelRatio;
+            }
+        });
+
+        // Uniform radial scaling would otherwise make strokes visually thicker.
+        if (!['Lines', 'Wave'].includes(animationName) && normalizedLayer.lineWidth) {
+            normalizedLayer.lineWidth /= visualizerScale;
+        }
+
+        if (!['Lines', 'Wave'].includes(animationName)) {
+            // Counter-scale the starting radius so Scale changes element length, not its gap from the album.
+            const defaultDiameter = document.querySelector('#visualizer').height / 3;
+            const fixedVisibleDiameter = ['Square', 'Turntable'].includes(animationName)
+                ? Math.max(normalizedLayer.diameter || defaultDiameter, 250 * visualizerPixelRatio)
+                : normalizedLayer.diameter || defaultDiameter;
+
+            normalizedLayer.diameter = fixedVisibleDiameter / visualizerScale;
+
+            if (animationName === 'Turntable') {
+                normalizedLayer.gap = (normalizedLayer.gap || 5 * visualizerPixelRatio) / visualizerScale;
+            }
+        }
+
+        const animation = new waveInstance.animations[animationName](normalizedLayer);
+        waveInstance.addAnimation(createScaledVisualizerAnimation(animationName, animation, normalizedLayer));
+    });
+}
+
+function createScaledVisualizerAnimation(animationName, animation, layer) {
+    return {
+        draw(data, context) {
+            if (visualizerScale === 1) {
+                animation.draw(data, context);
+                return;
+            }
+
+            const { width, height } = context.canvas;
+            context.save();
+
+            if (['Lines', 'Wave'].includes(animationName)) {
+                const anchorY = layer.top ? 0 : layer.center ? height / 2 : height;
+                context.translate(0, anchorY);
+                context.scale(1, visualizerScale);
+                context.translate(0, -anchorY);
+            } else {
+                context.translate(width / 2, height / 2);
+                context.scale(visualizerScale, visualizerScale);
+                context.translate(-width / 2, -height / 2);
+            }
+
+            animation.draw(data, context);
+            context.restore();
+        }
+    };
+}
+
+function getVisualizerLayerPresets(animationName) {
+    // Wave's narrow base/lows bands are capped by addVisualizerLayers so each
+    // rendered shape samples farther apart and shows meaningful variation.
+    switch (animationName) {
+        case 'Arcs':
+            return [
+                { lineColor: 'white', lineWidth: 5, fillColor: { gradient: ['#FA8BFF', '#2BD2FF', '#2BFF88'] }, count: 30, rounded: true, diameter: 450, frequencyBand: 'base' },
+                { lineColor: 'rgba(255,255,255,0.92)', lineWidth: 4, fillColor: { gradient: ['#FFCA76', '#FF7FEF'] }, count: 26, rounded: true, diameter: 450, mirroredX: true, frequencyBand: 'lows' },
+                { lineColor: 'rgba(255,255,255,0.84)', lineWidth: 3, fillColor: { gradient: ['#8CE2FF', '#C26AFF'] }, count: 22, rounded: true, diameter: 450, mirroredX: true, mirroredY: true, frequencyBand: 'mids' },
+                { lineColor: 'rgba(255,255,255,0.75)', lineWidth: 2, fillColor: { gradient: ['#B6FFB8', '#D9AAFF'] }, count: 18, rounded: true, diameter: 450, mirroredY: true, frequencyBand: 'highs' }
+            ];
+        case 'Wave':
+            return [
+                { lineColor: 'white', lineWidth: 1, fillColor: { gradient: ['#FBDA61', '#FF5ACD'] }, count: 34, diameter: 360, rounded: true, mirroredX: true, top: true, frequencyBand: 'base' },
+                { lineColor: 'rgba(255,255,255,0.9)', lineWidth: 1, fillColor: { gradient: ['#FDB86A', '#FF81D0'] }, count: 30, diameter: 320, rounded: true, mirroredX: true, bottom: true, rotate: 12, frequencyBand: 'lows' },
+                { lineColor: 'rgba(255,255,255,0.8)', lineWidth: 1, fillColor: { gradient: ['#61D4FB', '#FF82D6'] }, count: 26, diameter: 280, rounded: true, mirroredX: true, center: true, mirroredY: true, rotate: 24, frequencyBand: 'mids' },
+                { lineColor: 'rgba(255,255,255,0.75)', lineWidth: 1, fillColor: { gradient: ['#7DFB68', '#FF7FD3'] }, count: 22, diameter: 240, rounded: true, mirroredY: true, top: true, rotate: 36, frequencyBand: 'highs' }
+            ];
+        case 'Glob':
+            return [
+                { lineColor: 'white', lineWidth: 10, fillColor: { gradient: ['#FBDA61', '#FF5ACD'] }, diameter: 320, mirroredX: true, count: 28, rounded: true, frequencyBand: 'base' },
+                { lineColor: 'rgba(255,255,255,0.9)', lineWidth: 9, fillColor: { gradient: ['#FFE47E', '#FF8BE8'] }, diameter: 280, count: 24, rounded: true, rotate: 10, frequencyBand: 'lows' },
+                { lineColor: 'rgba(255,255,255,0.8)', lineWidth: 8, fillColor: { gradient: ['#8CE5FF', '#C771FF'] }, diameter: 240, mirroredX: true, count: 20, rounded: true, mirroredY: true, rotate: 18, frequencyBand: 'mids' },
+                { lineColor: 'rgba(255,255,255,0.7)', lineWidth: 7, fillColor: { gradient: ['#A3FFA9', '#D8B3FF'] }, diameter: 200, count: 16, rounded: true, mirroredY: true, rotate: 28, frequencyBand: 'highs' }
+            ];
+        case 'Lines':
+            return [
+                { lineColor: 'white', lineWidth: 12, fillColor: { gradient: ['#FA8BFF', '#2BD2FF', '#2BFF88'] }, count: 16, rounded: true, top: true, frequencyBand: 'base' },
+                { lineColor: 'rgba(255,255,255,0.9)', lineWidth: 9, fillColor: { gradient: ['#E8A4FF', '#A0E9FF'] }, count: 16, rounded: true, bottom: true, frequencyBand: 'lows' },
+                { lineColor: 'rgba(255,255,255,0.8)', lineWidth: 7, fillColor: { gradient: ['#8CD9FF', '#C77DFF'] }, count: 26, rounded: true, center: true, mirroredY: true, frequencyBand: 'mids' },
+                { lineColor: 'rgba(255,255,255,0.7)', lineWidth: 5, fillColor: { gradient: ['#C0FFB5', '#D9ABFF'] }, count: 20, rounded: true, mirroredY: true, frequencyBand: 'highs' }
+            ];
+        case 'Circles':
+            return [
+                { lineColor: 'white', lineWidth: 5, fillColor: { gradient: ['#FA8BFF', '#2BD2FF', '#2BFF88'] }, diameter: 480, mirroredX: true, count: 60, rounded: true, frequencyBand: 'base' },
+                { lineColor: 'rgba(255,255,255,0.9)', lineWidth: 4, fillColor: { gradient: ['#FFD7A9', '#FF95EA'] }, diameter: 360, count: 60, rounded: true, mirroredY: true, frequencyBand: 'lows' },
+                { lineColor: 'rgba(255,255,255,0.8)', lineWidth: 3, fillColor: { gradient: ['#8AE3FF', '#C16CFF'] }, diameter: 240, mirroredX: true, count: 50, rounded: true, mirroredY: true, frequencyBand: 'mids' },
+                { lineColor: 'rgba(255,255,255,0.7)', lineWidth: 2, fillColor: { gradient: ['#B8FFB2', '#D39BFF'] }, diameter: 120, count: 40, rounded: true, top: true, frequencyBand: 'highs' }
+            ];
+        case 'Flower':
+            return [
+                { lineColor: 'white', lineWidth: 10, fillColor: { gradient: ['#FA8BFF', '#2BD2FF', '#2BFF88'] }, mirroredX: true, count: 60, rounded: true, rotate: 0, frequencyBand: 'base' },
+                { lineColor: 'rgba(255,255,255,0.9)', lineWidth: 8, fillColor: { gradient: ['#FFCE8F', '#FF8CE3'] }, count: 60, rounded: true, rotate: 14, frequencyBand: 'lows' },
+                { lineColor: 'rgba(255,255,255,0.8)', lineWidth: 6, fillColor: { gradient: ['#8CE1FF', '#C56DFF'] }, count: 50, rounded: true, mirroredY: true, rotate: 28, frequencyBand: 'mids' },
+                { lineColor: 'rgba(255,255,255,0.7)', lineWidth: 4, fillColor: { gradient: ['#C4FFB3', '#D59EFF'] }, count: 40, rounded: true, mirroredX: true, mirroredY: true, rotate: 42, frequencyBand: 'highs' }
+            ];
+        case 'Shine':
+            return [
+                { lineColor: 'white', lineWidth: 10, fillColor: { gradient: ['#FA8BFF', '#2BD2FF', '#2BFF88'] }, mirroredX: true, count: 60, rounded: true, rotate: 0, frequencyBand: 'base' },
+                { lineColor: 'rgba(255,255,255,0.9)', lineWidth: 8, fillColor: { gradient: ['#FFE39D', '#FF96EA'] }, count: 60, rounded: true, mirroredY: true, rotate: 16, frequencyBand: 'lows' },
+                { lineColor: 'rgba(255,255,255,0.8)', lineWidth: 6, fillColor: { gradient: ['#8CE6FF', '#C169FF'] }, mirroredX: true, count: 50, rounded: true, rotate: 32, frequencyBand: 'mids' },
+                { lineColor: 'rgba(255,255,255,0.7)', lineWidth: 4, fillColor: { gradient: ['#BBFFB8', '#D4A1FF'] }, count: 40, rounded: true, mirroredX: true, mirroredY: true, rotate: 48, frequencyBand: 'highs' }
+            ];
+        case 'Square':
+            return [
+                { lineColor: 'white', lineWidth: 10, fillColor: { gradient: ['#FA8BFF', '#2BD2FF', '#2BFF88'] }, mirroredX: true, count: 60, rounded: true, diameter: 200, frequencyBand: 'base' },
+                { lineColor: 'rgba(255,255,255,0.9)', lineWidth: 8, fillColor: { gradient: ['#FFDBA9', '#FF8FEA'] }, count: 60, rounded: true, mirroredY: true, diameter: 200, frequencyBand: 'lows' },
+                { lineColor: 'rgba(255,255,255,0.8)', lineWidth: 6, fillColor: { gradient: ['#8EE8FF', '#C16BFF'] }, mirroredX: true, count: 50, rounded: true, mirroredY: true, diameter: 200, frequencyBand: 'mids' },
+                { lineColor: 'rgba(255,255,255,0.7)', lineWidth: 4, fillColor: { gradient: ['#BEFFB9', '#D2A7FF'] }, count: 40, rounded: true, top: true, diameter: 200, frequencyBand: 'highs' }
+            ];
+        case 'Turntable':
+            return [
+                { lineColor: 'white', lineWidth: 10, fillColor: { gradient: ['#FA8BFF', '#2BD2FF', '#2BFF88'] }, mirroredX: true, count: 60, rounded: true, rotate: 0, diameter: 200, frequencyBand: 'base' },
+                { lineColor: 'rgba(255,255,255,0.9)', lineWidth: 8, fillColor: { gradient: ['#FFE0A7', '#FF98ED'] }, count: 60, rounded: true, mirroredY: true, rotate: 18, diameter: 200,frequencyBand: 'lows' },
+                { lineColor: 'rgba(255,255,255,0.8)', lineWidth: 6, fillColor: { gradient: ['#8AE9FF', '#C168FF'] }, mirroredX: true, count: 50, rounded: true, rotate: 36, diameter: 200,frequencyBand: 'mids' },
+                { lineColor: 'rgba(255,255,255,0.7)', lineWidth: 4, fillColor: { gradient: ['#C0FFB9', '#D1A9FF'] }, count: 40, rounded: true, mirroredX: true, mirroredY: true, rotate: 54, diameter: 200,frequencyBand: 'highs' }
+            ];
+        default:
+            return [];
+    }
+}
+
+function setVisualizerMode(typeIndex) {
     visualizerType = typeIndex;
+    const canvasElement = document.querySelector("#visualizer");
+    const focusPage = document.getElementById('songFocusPage');
+
+    if (focusPage) {
+        focusPage.classList.remove(
+            'visualizer-mode-1', 'visualizer-mode-2', 'visualizer-mode-3',
+            'visualizer-mode-4', 'visualizer-mode-5', 'visualizer-mode-6',
+            'visualizer-mode-7', 'visualizer-mode-8', 'visualizer-mode-9'
+        );
+        focusPage.classList.add(`visualizer-mode-${typeIndex}`);
+        focusPage.style.background = '';
+    }
+
+    updateFocusAlbumDisplay(typeIndex);
+
     if (!waveInstance) {
         console.warn("Visualizer not initialized yet. Cannot change type.");
         return;
@@ -991,186 +1329,57 @@ function updateVisualizerType(typeIndex) {
             visNameDisplay.style.opacity = '0';
         }, 1500);
 
+        resizeVisualizerCanvas();
         waveInstance.clearAnimations(); // Clear existing animations before applying new one
         switch (visualizerType) {
             case '1':
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Arcs({
-                        lineColor: "white",
-                        lineWidth: 4,
-                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                        count: 30,
-                        rounded: true,
-                        diameter: 300, // Controls how large the center circle is
-                        frequencyBand: "base" // Focuses the arc reaction on the beat
-                    })
-                );
-                console.log("Visualizer initialized with Arcs animation on base frequencies.");
+                addVisualizerLayers('Arcs', getVisualizerLayerPresets('Arcs'));
+                console.log('Visualizer initialized with layered Arcs animations.');
                 break;
             case '2':
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Wave({
-                        lineColor: "white",
-                        lineWidth: 1,
-                        fillColor: { gradient: ["#FBDA61", "#FF5ACD"] },
-                        count: 15,
-                        rounded: true,
-                        frequencyBand: "base"
-                    })
-                );
-
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Wave({
-                        lineColor: "white",
-                        lineWidth: 1,
-                        fillColor: { gradient: ["#fba961", "#FF5ACD"] },
-                        count: 15,
-                        rounded: true,
-                        frequencyBand: "lows"
-                    })
-                );
-
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Wave({
-                        lineColor: "white",
-                        lineWidth: 1,
-                        fillColor: { gradient: ["#61d4fb", "#FF5ACD"] },
-                        count: 15,
-                        rounded: true,
-                        frequencyBand: "mids"
-                    })
-                );
-
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Wave({
-                        lineColor: "white",
-                        lineWidth: 1,
-                        fillColor: { gradient: ["#70fb61", "#FF5ACD"] },
-                        count: 25,
-                        rounded: true,
-                        frequencyBand: "highs"
-                    })
-                );
-                console.log("Visualizer initialized with Wave animation on base frequencies.");
+                addVisualizerLayers('Wave', getVisualizerLayerPresets('Wave'));
+                console.log('Visualizer initialized with layered Wave animations.');
                 break;
             case '3':
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Glob({
-                        lineColor: "white",
-                        lineWidth: 10,
-                        fillColor: { gradient: ["#FBDA61", "#FF5ACD"] },
-                        mirroredX: true,
-                        count: 25,
-                        rounded: true,
-                        frequencyBand: "highs"
-                    })
-                );
-                console.log("Visualizer initialized with Glob animation on high frequencies.");
+                addVisualizerLayers('Glob', getVisualizerLayerPresets('Glob'));
+                console.log('Visualizer initialized with layered Glob animations.');
                 break;
             case '4':
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Lines({
-                        lineColor: "white",
-                        lineWidth: 10,
-                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                        mirroredX: true,
-                        count: 30,
-                        rounded: true
-                    })
-                );
-                console.log("Visualizer initialized with Lines animation.");
+                addVisualizerLayers('Lines', getVisualizerLayerPresets('Lines'));
+                console.log('Visualizer initialized with layered Lines animations.');
                 break;
             case '5':
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Circles({
-                        lineColor: "white",
-                        lineWidth: 10,
-                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                        mirroredX: true,
-                        count: 60,
-                        rounded: true
-                    })
-                );
-                console.log("Visualizer initialized with Circles animation.");
+                addVisualizerLayers('Circles', getVisualizerLayerPresets('Circles'));
+                console.log('Visualizer initialized with layered Circles animations.');
                 break;
             case '6':
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Cubes({
-                        lineColor: "white",
-                        lineWidth: 10,
-                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                        mirroredX: true,
-                        count: 60,
-                        rounded: true
-                    })
-                );
-                console.log("Visualizer initialized with Cubes animation.");
+                addVisualizerLayers('Flower', getVisualizerLayerPresets('Flower'));
+                console.log('Visualizer initialized with layered Flower animations.');
                 break;
             case '7':
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Flower({
-                        lineColor: "white",
-                        lineWidth: 10,
-                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                        mirroredX: true,
-                        count: 60,
-                        rounded: true
-                    })
-                );
-                console.log("Visualizer initialized with Flower animation.");
+                addVisualizerLayers('Shine', getVisualizerLayerPresets('Shine'));
+                console.log('Visualizer initialized with layered Shine animations.');
                 break;
             case '8':
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Shine({
-                        lineColor: "white",
-                        lineWidth: 10,
-                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                        mirroredX: true,
-                        count: 60,
-                        rounded: true
-                    })
-                );
-                console.log("Visualizer initialized with Shine animation.");
+                addVisualizerLayers('Square', getVisualizerLayerPresets('Square'));
+                console.log('Visualizer initialized with layered Square animations.');
                 break;
             case '9':
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Square({
-                        lineColor: "white",
-                        lineWidth: 10,
-                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                        mirroredX: true,
-                        count: 60,
-                        rounded: true
-                    })
-                );
-                console.log("Visualizer initialized with Square animation.");
-                break;
-            case '10':
-                waveInstance.addAnimation(
-                    new waveInstance.animations.Turntable({
-                        lineColor: "white",
-                        lineWidth: 10,
-                        fillColor: { gradient: ["#FA8BFF", "#2BD2FF", "#2BFF88"] },
-                        mirroredX: true,
-                        count: 60,
-                        rounded: true
-                    })
-                );
-                console.log("Visualizer initialized with Turntable animation.");
+                addVisualizerLayers('Turntable', getVisualizerLayerPresets('Turntable'));
+                console.log('Visualizer initialized with layered Turntable animations.');
                 break;
             // Add cases for other visualizer types
         }
     }
 }
 
-function getWaveAnalyser() {
+function getWaveAnalyserNode() {
     if (!waveInstance) return null;
     return waveAnalyser || waveInstance._audioAnalyser || null;
 }
 
-function updateSensitivity(value) {
-    const sensValueDisplay = document.getElementById('sensValueDisplay');
-    const analyser = getWaveAnalyser();
+function setVisualizerSensitivity(value) {
+    const analyser = getWaveAnalyserNode();
 
     if (!analyser) {
         console.warn("Wave analyser is not ready yet!");
@@ -1180,18 +1389,35 @@ function updateSensitivity(value) {
     analyser.smoothingTimeConstant = 1.0 - value;
     analyser.fftSize = 2048;
 
-    if (sensValueDisplay) {
-        sensValueDisplay.textContent = `${Math.round((1.0 - value) * 100)}%`;
+    setVisualizerMode(visualizerType);
+}
+
+function setVisualizerGain(value) {
+    visualizerGain = Math.max(0.5, Math.min(3, Number(value) || 1));
+
+    const gainValue = document.querySelector('.visualizer-size-value');
+    if (gainValue) {
+        gainValue.textContent = `${visualizerGain.toFixed(1)}x`;
+    }
+}
+
+function setVisualizerScale(value) {
+    visualizerScale = Math.max(0.5, Math.min(2, Number(value) || 1));
+
+    const scaleValue = document.querySelector('.visualizer-scale-value');
+    if (scaleValue) {
+        scaleValue.textContent = `x${visualizerScale.toFixed(1)}`;
     }
 
-    updateVisualizerType(visualizerType);
+    // Rebuild wrappers so every layer uses the latest drawing scale.
+    setVisualizerMode(visualizerType);
 }
 /*---------------------------------------------
 7. Statistics
 ---------------------------------------------*/
 
 // --- UPDATED UI METRIC MAPPING ENGINE ---
-async function updateStatsPageStats() {
+async function updateStatsSummary() {
     try {
         const response = await fetch('http://localhost:3000/api/stats');
         const data = await response.json();
@@ -1224,7 +1450,7 @@ async function updateStatsPageStats() {
     }
 }
 
-async function buildStatsLeaderboards() {
+async function renderStatsLeaderboards() {
     try {
         // 1. Fetch your individual song and artist rankings from the backend
         const response = await fetch('http://localhost:3000/api/stats/top');
@@ -1275,16 +1501,16 @@ async function buildStatsLeaderboards() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    updateStatsPageStats();
-    buildStatsLeaderboards();
+    updateStatsSummary();
+    renderStatsLeaderboards();
 
     // 2. Manual Update Commitment Button 
     const refreshBtn = document.getElementById('refresh-stats-btn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', () => {
             // ANNOTATION: Forces a safe, non-destructive UI sync without wiping out userQueue arrays
-            updateStatsPageStats();
-            buildStatsLeaderboards();
+            updateStatsSummary();
+            renderStatsLeaderboards();
             console.log("User explicitly committed to layout redraw.");
         });
     }
